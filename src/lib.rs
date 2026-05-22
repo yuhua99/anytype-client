@@ -1,5 +1,5 @@
+pub mod api;
 pub mod cli;
-pub mod client;
 pub mod commands;
 pub mod config;
 pub mod models;
@@ -9,8 +9,8 @@ use anyhow::{Result, anyhow};
 use clap::Parser;
 
 use crate::{
+    api::AnytypeClient,
     cli::{Cli, Command},
-    client::AnytypeClient,
     commands::{auth_command, run_command},
     config::Config,
 };
