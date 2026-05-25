@@ -6,13 +6,16 @@ use crate::{
     output::{print_data, print_one},
 };
 
-use super::resolve_space;
+use super::{page_options, resolve_space};
 
 pub async fn run(client: &AnytypeClient, args: MembersArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
-        MembersCommand::List { space } => {
+        MembersCommand::List { space, page } => {
             let id = resolve_space(client, &space).await?;
-            print_data(client.members(&id).await?.data, output)
+            print_data(
+                client.members_page(&id, page_options(page)?).await?.data,
+                output,
+            )
         }
         MembersCommand::Get { space, member_id } => {
             let id = resolve_space(client, &space).await?;

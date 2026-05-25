@@ -1,15 +1,25 @@
 use anyhow::Result;
 use reqwest::Method;
 
-use super::AnytypeClient;
+use super::{AnytypeClient, PageOptions};
 use crate::models::{ObjectListResponse, ViewListResponse};
 
 impl AnytypeClient {
     pub async fn views(&self, space_id: &str, list_id: &str) -> Result<ViewListResponse> {
-        self.request_paginated(
+        self.views_page(space_id, list_id, None).await
+    }
+
+    pub async fn views_page(
+        &self,
+        space_id: &str,
+        list_id: &str,
+        page: Option<PageOptions>,
+    ) -> Result<ViewListResponse> {
+        self.request_data(
             Method::GET,
             &format!("/spaces/{space_id}/lists/{list_id}/views"),
             Option::<&()>::None,
+            page,
         )
         .await
     }
@@ -20,10 +30,22 @@ impl AnytypeClient {
         list_id: &str,
         view_id: &str,
     ) -> Result<ObjectListResponse> {
-        self.request_paginated(
+        self.view_objects_page(space_id, list_id, view_id, None)
+            .await
+    }
+
+    pub async fn view_objects_page(
+        &self,
+        space_id: &str,
+        list_id: &str,
+        view_id: &str,
+        page: Option<PageOptions>,
+    ) -> Result<ObjectListResponse> {
+        self.request_data(
             Method::GET,
             &format!("/spaces/{space_id}/lists/{list_id}/views/{view_id}/objects"),
             Option::<&()>::None,
+            page,
         )
         .await
     }

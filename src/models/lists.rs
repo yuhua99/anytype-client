@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tabled::Tabled;
 
-use super::{DataResponse, Object};
+use super::{DataResponse, ExtraFields, Object};
 
 pub type ViewListResponse = DataResponse<ListView>;
 pub type ObjectListResponse = DataResponse<Object>;
@@ -18,4 +18,7 @@ pub struct ListView {
     #[serde(default)]
     #[tabled(skip)]
     pub sorts: Vec<Value>,
+    #[serde(flatten)]
+    #[tabled(skip)]
+    pub extra: ExtraFields,
 }

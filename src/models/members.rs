@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tabled::Tabled;
 
-use super::{DataResponse, Icon};
+use super::{DataResponse, ExtraFields, Icon};
 
 pub type MemberListResponse = DataResponse<Member>;
 
@@ -16,6 +16,9 @@ pub struct Member {
     #[serde(default)]
     #[tabled(skip)]
     pub icon: Option<Icon>,
+    #[serde(flatten)]
+    #[tabled(skip)]
+    pub extra: ExtraFields,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

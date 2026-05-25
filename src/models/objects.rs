@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tabled::Tabled;
 
-use super::Icon;
+use super::{ExtraFields, Icon, PropertyLinkValue};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectTypeRef {
@@ -12,6 +12,8 @@ pub struct ObjectTypeRef {
     pub key: String,
     #[serde(default)]
     pub name: String,
+    #[serde(flatten)]
+    pub extra: ExtraFields,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Tabled)]
@@ -38,6 +40,9 @@ pub struct Object {
     #[serde(default)]
     #[tabled(skip)]
     pub properties: Vec<Value>,
+    #[serde(flatten)]
+    #[tabled(skip)]
+    pub extra: ExtraFields,
 }
 
 fn display_object_type(object_type: &Option<ObjectTypeRef>) -> String {
@@ -68,5 +73,20 @@ pub struct CreateObjectRequest {
     pub icon: Option<Icon>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub template_id: Option<String>,
-    pub properties: Vec<Value>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub properties: Vec<PropertyLinkValue>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UpdateObjectRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_key: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Option<Icon>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub properties: Vec<PropertyLinkValue>,
 }

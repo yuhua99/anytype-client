@@ -6,22 +6,36 @@ use crate::{
     output::print_data,
 };
 
-use super::resolve_space;
+use super::{page_options, resolve_space};
 
 pub async fn run(client: &AnytypeClient, args: ListsArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
-        ListsCommand::Views { space, list_id } => {
+        ListsCommand::Views {
+            space,
+            list_id,
+            page,
+        } => {
             let id = resolve_space(client, &space).await?;
-            print_data(client.views(&id, &list_id).await?.data, output)
+            print_data(
+                client
+                    .views_page(&id, &list_id, page_options(page)?)
+                    .await?
+                    .data,
+                output,
+            )
         }
         ListsCommand::Objects {
             space,
             list_id,
             view_id,
+            page,
         } => {
             let id = resolve_space(client, &space).await?;
             print_data(
-                client.view_objects(&id, &list_id, &view_id).await?.data,
+                client
+                    .view_objects_page(&id, &list_id, &view_id, page_options(page)?)
+                    .await?
+                    .data,
                 output,
             )
         }

@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
+use crate::models::{IconColor, PropertyFormat};
+
 #[derive(Parser)]
 #[command(
     name = "anyclient",
@@ -32,6 +34,51 @@ pub enum OutputFormat {
     Yaml,
 }
 
+#[derive(Debug, Clone, Copy, Default, Args)]
+pub struct PageArgs {
+    #[arg(long)]
+    pub limit: Option<i64>,
+    #[arg(long, default_value_t = 0)]
+    pub offset: i64,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct IconArgs {
+    #[arg(long)]
+    pub clear_icon: bool,
+    /// Legacy emoji shortcut. Prefer --icon-emoji.
+    #[arg(long)]
+    pub icon: Option<String>,
+    #[arg(long)]
+    pub icon_emoji: Option<String>,
+    #[arg(long)]
+    pub icon_file: Option<String>,
+    #[arg(long)]
+    pub icon_name: Option<String>,
+    #[arg(long, value_enum, default_value_t = IconColor::Yellow)]
+    pub icon_color: IconColor,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct PropertyValueArgs {
+    /// Repeatable JSON object matching Anytype property value schema.
+    #[arg(long = "property")]
+    pub properties: Vec<String>,
+    /// JSON array matching Anytype properties schema.
+    #[arg(long = "properties-json")]
+    pub properties_json: Option<String>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct PropertyLinkArgs {
+    /// Repeatable JSON object: {"key":"...","name":"...","format":"text"}.
+    #[arg(long = "property")]
+    pub properties: Vec<String>,
+    /// JSON array of property link objects.
+    #[arg(long = "properties-json")]
+    pub properties_json: Option<String>,
+}
+
 #[derive(Subcommand)]
 pub enum Command {
     Auth(AuthArgs),
@@ -39,6 +86,9 @@ pub enum Command {
     Objects(ObjectsArgs),
     Search(SearchArgs),
     Types(TypesArgs),
+    Properties(PropertiesArgs),
+    Tags(TagsArgs),
+    Files(FilesArgs),
     Lists(ListsArgs),
     Members(MembersArgs),
 }
@@ -51,23 +101,15 @@ pub struct AuthArgs {
 
 #[derive(Subcommand)]
 pub enum AuthCommand {
-    /// Authenticate against Anytype desktop app local API (default: http://127.0.0.1:31009).
     Desktop {
-        /// App name used for challenge auth.
         #[arg(long, default_value = "anyclient")]
         app_name: String,
-
-        /// Force re-auth even if config has API key.
         #[arg(long)]
         force: bool,
     },
-    /// Store API key for Anytype headless server (default: http://127.0.0.1:31012).
     Headless {
-        /// API key from `anytype auth apikey create <name>`.
         #[arg(long)]
         api_key: Option<String>,
-
-        /// Force overwrite even if config has API key.
         #[arg(long)]
         force: bool,
     },
@@ -81,7 +123,10 @@ pub struct SpacesArgs {
 
 #[derive(Subcommand)]
 pub enum SpacesCommand {
-    List,
+    List {
+        #[command(flatten)]
+        page: PageArgs,
+    },
     Get {
         space: String,
     },
@@ -90,6 +135,13 @@ pub enum SpacesCommand {
         name: String,
         #[arg(long, default_value = "")]
         description: String,
+    },
+    Update {
+        space: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
     },
 }
 
@@ -103,10 +155,14 @@ pub struct ObjectsArgs {
 pub enum ObjectsCommand {
     List {
         space: String,
+        #[command(flatten)]
+        page: PageArgs,
     },
     Get {
         space: String,
         object_id: String,
+        #[arg(long, default_value = "md", value_parser = ["md"])]
+        format: String,
     },
     Create {
         space: String,
@@ -116,10 +172,26 @@ pub enum ObjectsCommand {
         r#type: String,
         #[arg(long, default_value = "")]
         body: String,
-        #[arg(long)]
-        icon: Option<String>,
+        #[command(flatten)]
+        icon: IconArgs,
         #[arg(long)]
         template: Option<String>,
+        #[command(flatten)]
+        properties: PropertyValueArgs,
+    },
+    Update {
+        space: String,
+        object_id: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        r#type: Option<String>,
+        #[arg(long)]
+        markdown: Option<String>,
+        #[command(flatten)]
+        icon: IconArgs,
+        #[command(flatten)]
+        properties: PropertyValueArgs,
     },
     Delete {
         space: String,
@@ -128,6 +200,8 @@ pub enum ObjectsCommand {
     Export {
         space: String,
         object_id: String,
+        #[arg(long, default_value = "md", value_parser = ["md"])]
+        format: String,
     },
 }
 
@@ -137,12 +211,16 @@ pub struct SearchArgs {
     pub query: String,
     #[arg(long, value_delimiter = ',')]
     pub types: Vec<String>,
-    #[arg(long)]
+    #[arg(long, value_parser = ["created_date", "last_modified_date", "last_opened_date", "name"])]
     pub sort: Option<String>,
-    #[arg(long, default_value = "desc")]
+    #[arg(long, default_value = "desc", value_parser = ["asc", "desc"])]
     pub direction: String,
     #[arg(long)]
+    pub filters: Option<String>,
+    #[arg(long)]
     pub space: Option<String>,
+    #[command(flatten)]
+    pub page: PageArgs,
 }
 
 #[derive(Args)]
@@ -155,19 +233,179 @@ pub struct TypesArgs {
 pub enum TypesCommand {
     List {
         space: String,
+        #[command(flatten)]
+        page: PageArgs,
     },
     Get {
+        space: String,
+        type_id: String,
+    },
+    Create {
+        space: String,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        plural_name: String,
+        #[arg(long, value_parser = ["basic", "profile", "action", "note"])]
+        layout: String,
+        #[arg(long)]
+        key: Option<String>,
+        #[command(flatten)]
+        icon: IconArgs,
+        #[command(flatten)]
+        properties: PropertyLinkArgs,
+    },
+    Update {
+        space: String,
+        type_id: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long)]
+        plural_name: Option<String>,
+        #[arg(long, value_parser = ["basic", "profile", "action", "note"])]
+        layout: Option<String>,
+        #[arg(long)]
+        key: Option<String>,
+        #[command(flatten)]
+        icon: IconArgs,
+        #[command(flatten)]
+        properties: PropertyLinkArgs,
+    },
+    Delete {
         space: String,
         type_id: String,
     },
     Templates {
         space: String,
         type_id: String,
+        #[command(flatten)]
+        page: PageArgs,
     },
     TemplateGet {
         space: String,
         type_id: String,
         template_id: String,
+    },
+}
+
+#[derive(Args)]
+pub struct PropertiesArgs {
+    #[command(subcommand)]
+    pub command: PropertiesCommand,
+}
+
+#[derive(Subcommand)]
+pub enum PropertiesCommand {
+    List {
+        space: String,
+        #[command(flatten)]
+        page: PageArgs,
+    },
+    Get {
+        space: String,
+        property_id: String,
+    },
+    Create {
+        space: String,
+        #[arg(long)]
+        name: String,
+        #[arg(long, value_enum)]
+        format: PropertyFormat,
+        #[arg(long)]
+        key: Option<String>,
+        #[arg(long = "tag")]
+        tags: Vec<String>,
+        #[arg(long = "tags-json")]
+        tags_json: Option<String>,
+    },
+    Update {
+        space: String,
+        property_id: String,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        key: Option<String>,
+    },
+    Delete {
+        space: String,
+        property_id: String,
+    },
+}
+
+#[derive(Args)]
+pub struct TagsArgs {
+    #[command(subcommand)]
+    pub command: TagsCommand,
+}
+
+#[derive(Subcommand)]
+pub enum TagsCommand {
+    List {
+        space: String,
+        property_id: String,
+        #[command(flatten)]
+        page: PageArgs,
+    },
+    Get {
+        space: String,
+        property_id: String,
+        tag_id: String,
+    },
+    Create {
+        space: String,
+        property_id: String,
+        #[arg(long)]
+        name: String,
+        #[arg(long, value_enum)]
+        color: IconColor,
+        #[arg(long)]
+        key: Option<String>,
+    },
+    Update {
+        space: String,
+        property_id: String,
+        tag_id: String,
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long, value_enum)]
+        color: Option<IconColor>,
+        #[arg(long)]
+        key: Option<String>,
+    },
+    Delete {
+        space: String,
+        property_id: String,
+        tag_id: String,
+    },
+}
+
+#[derive(Args)]
+pub struct FilesArgs {
+    #[command(subcommand)]
+    pub command: FilesCommand,
+}
+
+#[derive(Subcommand)]
+pub enum FilesCommand {
+    Upload {
+        space: String,
+        path: PathBuf,
+    },
+    Download {
+        space: String,
+        file_id: String,
+        #[arg(short, long)]
+        output: PathBuf,
+        #[arg(long)]
+        width: Option<i64>,
+        #[arg(long)]
+        force: bool,
+    },
+    Delete {
+        space: String,
+        file_id: String,
+        #[arg(long)]
+        skip_bin: bool,
     },
 }
 
@@ -182,11 +420,15 @@ pub enum ListsCommand {
     Views {
         space: String,
         list_id: String,
+        #[command(flatten)]
+        page: PageArgs,
     },
     Objects {
         space: String,
         list_id: String,
         view_id: String,
+        #[command(flatten)]
+        page: PageArgs,
     },
     Add {
         space: String,
@@ -208,6 +450,13 @@ pub struct MembersArgs {
 
 #[derive(Subcommand)]
 pub enum MembersCommand {
-    List { space: String },
-    Get { space: String, member_id: String },
+    List {
+        space: String,
+        #[command(flatten)]
+        page: PageArgs,
+    },
+    Get {
+        space: String,
+        member_id: String,
+    },
 }

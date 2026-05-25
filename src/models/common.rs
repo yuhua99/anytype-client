@@ -1,17 +1,59 @@
+use std::{collections::BTreeMap, fmt};
+
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+pub type ExtraFields = BTreeMap<String, Value>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Icon {
-    #[serde(default)]
-    pub format: Option<String>,
-    #[serde(default)]
-    pub emoji: Option<String>,
-    #[serde(default)]
-    pub file: Option<String>,
-    #[serde(default)]
-    pub name: Option<String>,
-    #[serde(default)]
-    pub color: Option<String>,
+#[serde(tag = "format", rename_all = "snake_case")]
+pub enum Icon {
+    Emoji {
+        emoji: String,
+    },
+    File {
+        file: String,
+    },
+    #[serde(rename = "icon")]
+    Named {
+        name: String,
+        color: IconColor,
+    },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ValueEnum)]
+#[serde(rename_all = "snake_case")]
+#[value(rename_all = "snake_case")]
+pub enum IconColor {
+    Grey,
+    Yellow,
+    Orange,
+    Red,
+    Pink,
+    Purple,
+    Blue,
+    Ice,
+    Teal,
+    Lime,
+}
+
+impl fmt::Display for IconColor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Grey => "grey",
+            Self::Yellow => "yellow",
+            Self::Orange => "orange",
+            Self::Red => "red",
+            Self::Pink => "pink",
+            Self::Purple => "purple",
+            Self::Blue => "blue",
+            Self::Ice => "ice",
+            Self::Teal => "teal",
+            Self::Lime => "lime",
+        };
+        f.write_str(value)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

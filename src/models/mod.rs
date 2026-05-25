@@ -1,17 +1,21 @@
 mod auth;
 mod common;
+mod files;
 mod lists;
 mod members;
 mod objects;
+mod properties;
 mod search;
 mod spaces;
 mod types;
 
 pub use auth::*;
 pub use common::*;
+pub use files::*;
 pub use lists::*;
 pub use members::*;
 pub use objects::*;
+pub use properties::*;
 pub use search::*;
 pub use spaces::*;
 pub use types::*;
