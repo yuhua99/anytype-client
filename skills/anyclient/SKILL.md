@@ -1,6 +1,6 @@
 ---
 name: anyclient
-description: Use `anyclient` CLI to interact with Anytype. Use when the user wants to read, create, update, delete, or search Anytype resources: spaces, objects, types, properties, tags, lists, members, or files.
+description: Use anyclient CLI to interact with Anytype. Use when the user wants to read, create, update, delete, or search Anytype resources — spaces, objects, types, properties, tags, lists, members, files.
 ---
 
 # anyclient
