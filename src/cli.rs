@@ -89,7 +89,7 @@ pub enum Command {
     Properties(PropertiesArgs),
     Tags(TagsArgs),
     Files(FilesArgs),
-    Lists(ListsArgs),
+    Collections(CollectionsArgs),
     Members(MembersArgs),
 }
 
@@ -410,34 +410,34 @@ pub enum FilesCommand {
 }
 
 #[derive(Args)]
-pub struct ListsArgs {
+pub struct CollectionsArgs {
     #[command(subcommand)]
-    pub command: ListsCommand,
+    pub command: CollectionsCommand,
 }
 
 #[derive(Subcommand)]
-pub enum ListsCommand {
+pub enum CollectionsCommand {
     Views {
         space: String,
-        list_id: String,
+        collection_id: String,
         #[command(flatten)]
         page: PageArgs,
     },
     Objects {
         space: String,
-        list_id: String,
+        collection_id: String,
         view_id: String,
         #[command(flatten)]
         page: PageArgs,
     },
     Add {
         space: String,
-        list_id: String,
+        collection_id: String,
         object_ids: Vec<String>,
     },
     Remove {
         space: String,
-        list_id: String,
+        collection_id: String,
         object_id: String,
     },
 }

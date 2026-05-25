@@ -1,6 +1,6 @@
 mod auth;
 mod files;
-mod lists;
+mod collections;
 mod members;
 mod objects;
 mod properties;
@@ -34,7 +34,7 @@ pub async fn run_command(
         Command::Properties(args) => properties::run(&client, args, &output).await,
         Command::Tags(args) => tags::run(&client, args, &output).await,
         Command::Files(args) => files::run(&client, args, &output).await,
-        Command::Lists(args) => lists::run(&client, args, &output).await,
+        Command::Collections(args) => collections::run(&client, args, &output).await,
         Command::Members(args) => members::run(&client, args, &output).await,
         Command::Auth(_) => unreachable!(),
     }

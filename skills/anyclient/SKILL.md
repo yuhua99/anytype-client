@@ -82,14 +82,15 @@ Icon colors: `grey yellow orange red pink purple blue ice teal lime`
 | `anyclient tags update SPACE PROP_ID TAG_ID [-o json]` | `--name`, `--color`, `--key` |
 | `anyclient tags delete SPACE PROP_ID TAG_ID [-o json]` | |
 
-### Lists
+### Collections
+
 
 | Command | Notes |
 |---|---|
-| `anyclient lists views SPACE LIST_ID [-o json]` | |
-| `anyclient lists objects SPACE LIST_ID VIEW_ID [-o json]` | |
-| `anyclient lists add SPACE LIST_ID OBJ_ID [OBJ_ID...] [-o json]` | |
-| `anyclient lists remove SPACE LIST_ID OBJ_ID [-o json]` | |
+| `anyclient collections views SPACE COLLECTION_ID [-o json]` | |
+| `anyclient collections objects SPACE COLLECTION_ID VIEW_ID [-o json]` | |
+| `anyclient collections add SPACE COLLECTION_ID OBJ_ID [OBJ_ID...] [-o json]` | |
+| `anyclient collections remove SPACE COLLECTION_ID OBJ_ID [-o json]` | |
 
 ### Members
 

@@ -2,67 +2,67 @@ use anyhow::Result;
 
 use crate::{
     api::AnytypeClient,
-    cli::{ListsArgs, ListsCommand, OutputFormat},
+    cli::{CollectionsArgs, CollectionsCommand, OutputFormat},
     output::print_data,
 };
 
 use super::{page_options, resolve_space};
 
-pub async fn run(client: &AnytypeClient, args: ListsArgs, output: &OutputFormat) -> Result<()> {
+pub async fn run(client: &AnytypeClient, args: CollectionsArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
-        ListsCommand::Views {
+        CollectionsCommand::Views {
             space,
-            list_id,
+            collection_id,
             page,
         } => {
             let id = resolve_space(client, &space).await?;
             print_data(
                 client
-                    .views_page(&id, &list_id, page_options(page)?)
+                    .views_page(&id, &collection_id, page_options(page)?)
                     .await?
                     .data,
                 output,
             )
         }
-        ListsCommand::Objects {
+        CollectionsCommand::Objects {
             space,
-            list_id,
+            collection_id,
             view_id,
             page,
         } => {
             let id = resolve_space(client, &space).await?;
             print_data(
                 client
-                    .view_objects_page(&id, &list_id, &view_id, page_options(page)?)
+                    .view_objects_page(&id, &collection_id, &view_id, page_options(page)?)
                     .await?
                     .data,
                 output,
             )
         }
-        ListsCommand::Add {
+        CollectionsCommand::Add {
             space,
-            list_id,
+            collection_id,
             object_ids,
         } => {
             let id = resolve_space(client, &space).await?;
-            client.add_to_list(&id, &list_id, &object_ids).await?;
+            client.add_to_list(&id, &collection_id, &object_ids).await?;
             println!(
-                "Successfully added {} object(s) to list {}",
+                "Successfully added {} object(s) to collection {}",
                 object_ids.len(),
-                list_id
+                collection_id
             );
             Ok(())
         }
-        ListsCommand::Remove {
+        CollectionsCommand::Remove {
             space,
-            list_id,
+            collection_id,
             object_id,
         } => {
             let id = resolve_space(client, &space).await?;
-            client.remove_from_list(&id, &list_id, &object_id).await?;
+            client.remove_from_list(&id, &collection_id, &object_id).await?;
             println!(
-                "Successfully removed object {} from list {}",
-                object_id, list_id
+                "Successfully removed object {} from collection {}",
+                object_id, collection_id
             );
             Ok(())
         }
