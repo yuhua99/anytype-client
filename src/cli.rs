@@ -212,6 +212,34 @@ pub enum ObjectsCommand {
         #[arg(long, default_value = "md", value_parser = ["md"])]
         format: String,
     },
+    /// Batch update multiple objects by IDs or search query.
+    UpdateMany {
+        space: String,
+        /// File with one object ID per line.
+        #[arg(long)]
+        ids_file: Option<PathBuf>,
+        /// Inline object IDs (comma-separated).
+        #[arg(long, value_delimiter = ',')]
+        ids: Vec<String>,
+        /// Search query (used when no IDs provided).
+        #[arg(long)]
+        query: Option<String>,
+        /// Filter by type key(s).
+        #[arg(long, value_delimiter = ',')]
+        types: Vec<String>,
+        /// Property name/key/id holding tags.
+        #[arg(long)]
+        tag_property: Option<String>,
+        /// Tag name/key/id(s) to add.
+        #[arg(long = "tag-add")]
+        tag_add: Vec<String>,
+        /// Tag name/key/id(s) to remove.
+        #[arg(long = "tag-remove")]
+        tag_remove: Vec<String>,
+        /// Preview changes without applying.
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Args)]
