@@ -332,11 +332,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                             .unwrap_or_else(|| "(none)".to_string());
                         *counts.entry(type_name).or_insert(0) += 1;
                     }
-                    for (name, count) in &counts {
-                        println!("{name}: {count}");
-                    }
-                    println!("---");
-                    println!("total: {}", results.len());
+                    print_counts(&counts, results.len(), output)?;
                 }
                 Some(group) if group.starts_with("property:") => {
                     let prop_key = &group["property:".len()..];
@@ -344,30 +340,27 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                         std::collections::BTreeMap::new();
                     let mut missing = 0usize;
                     for obj in &results {
-                        let val = obj
-                            .properties
-                            .iter()
-                            .find(|p| {
-                                p.get("key")
-                                    .and_then(Value::as_str)
-                                    .map_or(false, |k| k.eq_ignore_ascii_case(prop_key))
-                            })
-                            .map(display_property_value)
-                            .unwrap_or_default();
-                        if val.is_empty() {
-                            missing += 1;
-                        } else {
-                            *counts.entry(val).or_insert(0) += 1;
+                        let found = obj.properties.iter().find(|p| {
+                            p.get("key")
+                                .and_then(Value::as_str)
+                                .map_or(false, |k| k.eq_ignore_ascii_case(prop_key))
+                        });
+                        match found {
+                            None => missing += 1,
+                            Some(prop) => {
+                                let val = display_property_value(prop);
+                                if val.is_empty() {
+                                    *counts.entry("(empty)".to_string()).or_insert(0) += 1;
+                                } else {
+                                    *counts.entry(val).or_insert(0) += 1;
+                                }
+                            }
                         }
                     }
-                    for (val, count) in &counts {
-                        println!("{val}: {count}");
-                    }
                     if missing > 0 {
-                        println!("(missing): {missing}");
+                        counts.insert("(missing)".to_string(), missing);
                     }
-                    println!("---");
-                    println!("total: {}", results.len());
+                    print_counts(&counts, results.len(), output)?;
                 }
                 Some(other) => {
                     return Err(anyhow!(
@@ -375,7 +368,12 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                     ));
                 }
                 None => {
-                    println!("{}", results.len());
+                    let total = results.len();
+                    match output {
+                        OutputFormat::Json => println!("{{\"total\": {total}}}"),
+                        OutputFormat::Yaml => println!("total: {total}"),
+                        OutputFormat::Table => println!("{total}"),
+                    }
                 }
             }
             Ok(())
@@ -419,20 +417,38 @@ fn display_property_value(prop: &Value) -> String {
     serde_json::to_string(prop).unwrap_or_default()
 }
 
-/// Print object properties in human-readable format.
-pub fn print_properties(props: &[Value]) {
-    for prop in props {
-        let key = prop
-            .get("key")
-            .and_then(Value::as_str)
-            .unwrap_or("?");
-        let name = prop
-            .get("name")
-            .and_then(Value::as_str)
-            .unwrap_or(key);
-        let value = display_property_value(prop);
-        println!("  {name}: {value}");
+/// Print grouped counts respecting output format.
+fn print_counts(
+    counts: &std::collections::BTreeMap<String, usize>,
+    total: usize,
+    output: &OutputFormat,
+) -> Result<()> {
+    match output {
+        OutputFormat::Json => {
+            let mut map = serde_json::Map::new();
+            for (key, count) in counts {
+                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
+            }
+            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
+            println!("{}", serde_json::to_string_pretty(&map)?);
+        }
+        OutputFormat::Yaml => {
+            let mut map = serde_json::Map::new();
+            for (key, count) in counts {
+                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
+            }
+            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
+            println!("{}", serde_yaml::to_string(&map)?);
+        }
+        OutputFormat::Table => {
+            for (name, count) in counts {
+                println!("{name}: {count}");
+            }
+            println!("---");
+            println!("total: {total}");
+        }
     }
+    Ok(())
 }
 
 /// Read current tags from object, merge add/remove, return final tag IDs.
