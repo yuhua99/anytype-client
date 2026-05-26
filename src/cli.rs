@@ -192,6 +192,15 @@ pub enum ObjectsCommand {
         icon: IconArgs,
         #[command(flatten)]
         properties: PropertyValueArgs,
+        /// Property name/key/id holding tags (e.g. "Tag").
+        #[arg(long)]
+        tag_property: Option<String>,
+        /// Tag name/key/id(s) to add (repeatable).
+        #[arg(long = "tag-add")]
+        tag_add: Vec<String>,
+        /// Tag name/key/id(s) to remove (repeatable).
+        #[arg(long = "tag-remove")]
+        tag_remove: Vec<String>,
     },
     Delete {
         space: String,
