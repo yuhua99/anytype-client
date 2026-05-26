@@ -171,6 +171,97 @@ fn parse_json(input: &str, arg: &str) -> Result<Value> {
     serde_json::from_str(input).map_err(|err| anyhow!("invalid JSON for {arg}: {err}"))
 }
 
+/// Resolve a property name or key to its ID within a space.
+pub async fn resolve_property(
+    client: &AnytypeClient,
+    space_id: &str,
+    name_or_key: &str,
+) -> Result<String> {
+    let props = client.properties(space_id).await?.data;
+    if let Some(p) = props.iter().find(|p| p.id == name_or_key) {
+        return Ok(p.id.clone());
+    }
+    if let Some(p) = props
+        .iter()
+        .find(|p| p.key.eq_ignore_ascii_case(name_or_key))
+    {
+        return Ok(p.id.clone());
+    }
+    if let Some(p) = props
+        .iter()
+        .find(|p| p.name.eq_ignore_ascii_case(name_or_key))
+    {
+        return Ok(p.id.clone());
+    }
+    let needle = name_or_key.to_lowercase();
+    let matches: Vec<_> = props
+        .iter()
+        .filter(|p| {
+            p.name.to_lowercase().contains(&needle) || p.key.to_lowercase().contains(&needle)
+        })
+        .collect();
+    match matches.len() {
+        0 => Err(anyhow!(
+            "property not found: '{name_or_key}' matched no property name or key"
+        )),
+        1 => Ok(matches[0].id.clone()),
+        _ => Err(anyhow!(
+            "property ambiguous: '{name_or_key}' matched multiple: {}",
+            matches
+                .iter()
+                .map(|p| format!("{} ({})", p.name, p.id))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )),
+    }
+}
+
+/// Resolve a tag name or key to its ID within a property.
+pub async fn resolve_tag(
+    client: &AnytypeClient,
+    space_id: &str,
+    property_id: &str,
+    name_or_key: &str,
+) -> Result<String> {
+    let tags = client.tags(space_id, property_id).await?.data;
+    if let Some(t) = tags.iter().find(|t| t.id == name_or_key) {
+        return Ok(t.id.clone());
+    }
+    if let Some(t) = tags
+        .iter()
+        .find(|t| t.key.eq_ignore_ascii_case(name_or_key))
+    {
+        return Ok(t.id.clone());
+    }
+    if let Some(t) = tags
+        .iter()
+        .find(|t| t.name.eq_ignore_ascii_case(name_or_key))
+    {
+        return Ok(t.id.clone());
+    }
+    let needle = name_or_key.to_lowercase();
+    let matches: Vec<_> = tags
+        .iter()
+        .filter(|t| {
+            t.name.to_lowercase().contains(&needle) || t.key.to_lowercase().contains(&needle)
+        })
+        .collect();
+    match matches.len() {
+        0 => Err(anyhow!(
+            "tag not found: '{name_or_key}' matched no tag name or key"
+        )),
+        1 => Ok(matches[0].id.clone()),
+        _ => Err(anyhow!(
+            "tag ambiguous: '{name_or_key}' matched multiple: {}",
+            matches
+                .iter()
+                .map(|t| format!("{} ({})", t.name, t.id))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )),
+    }
+}
+
 async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> Result<String> {
     let spaces = client.spaces().await?.data;
     resolve_space_from_list(&spaces, id_or_name)
