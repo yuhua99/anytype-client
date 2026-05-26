@@ -240,6 +240,31 @@ pub enum ObjectsCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Find objects with simplified filters.
+    Find {
+        space: String,
+        /// Filter by type key/name.
+        #[arg(long)]
+        r#type: Option<String>,
+        /// Filter by tag name/key/id (requires --tag-property).
+        #[arg(long)]
+        tag: Option<String>,
+        /// Property name for --tag filter.
+        #[arg(long)]
+        tag_property: Option<String>,
+        /// Filter by property value: key=value.
+        #[arg(long)]
+        property: Option<String>,
+        /// Filter by name (substring match).
+        #[arg(long)]
+        name: Option<String>,
+        /// Output only object IDs.
+        #[arg(long)]
+        ids_only: bool,
+        /// Output only object names.
+        #[arg(long)]
+        names_only: bool,
+    },
 }
 
 #[derive(Args)]

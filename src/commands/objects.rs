@@ -219,6 +219,85 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             }
             Ok(())
         }
+        ObjectsCommand::Find {
+            space,
+            r#type,
+            tag,
+            tag_property,
+            property,
+            name,
+            ids_only,
+            names_only,
+        } => {
+            let id = resolve_space(client, &space).await?;
+
+            // Search for all objects in space
+            let search_types = r#type
+                .as_ref()
+                .map(|t| vec![t.clone()])
+                .unwrap_or_default();
+            let req = SearchRequest {
+                query: name.clone().unwrap_or_default(),
+                types: search_types,
+                filters: None,
+                sort: None,
+            };
+            let mut results = client.space_search_page(&id, &req, None).await?.data;
+
+            // Post-filter by tag
+            if let Some(tag_name) = &tag {
+                let prop = tag_property
+                    .as_deref()
+                    .ok_or_else(|| anyhow!("--tag-property is required when using --tag"))?;
+                let prop_id = resolve_property(client, &id, prop).await?;
+                let all_tags = client.tags(&id, &prop_id).await?.data;
+                let target_id = resolve_tag_from_list(&all_tags, tag_name)?;
+                results.retain(|obj| {
+                    obj.properties
+                        .iter()
+                        .find(|p| {
+                            p.get("key")
+                                .and_then(Value::as_str)
+                                .map_or(false, |k| k.eq_ignore_ascii_case(prop))
+                        })
+                        .and_then(|p| p.get("multi_select"))
+                        .and_then(Value::as_array)
+                        .map_or(false, |arr| {
+                            arr.iter().any(|v| {
+                                v.as_str() == Some(&target_id)
+                                    || v.get("id").and_then(Value::as_str) == Some(&target_id)
+                            })
+                        })
+                });
+            }
+
+            // Post-filter by property value
+            if let Some(prop_expr) = &property {
+                let (key, value) = prop_expr
+                    .split_once('=')
+                    .ok_or_else(|| anyhow!("--property must be key=value"))?;
+                results.retain(|obj| {
+                    obj.properties.iter().any(|p| {
+                        p.get("key").and_then(Value::as_str) == Some(key)
+                            && property_matches_value(p, value)
+                    })
+                });
+            }
+
+            // Output
+            if ids_only {
+                for obj in &results {
+                    println!("{}", obj.id);
+                }
+            } else if names_only {
+                for obj in &results {
+                    println!("{}", obj.name);
+                }
+            } else {
+                print_data(results, output)?;
+            }
+            Ok(())
+        }
     }
 }
 
@@ -392,4 +471,26 @@ async fn get_object_tag_ids(
                 .collect()
         })
         .unwrap_or_default())
+}
+
+/// Check if a property value matches the target string.
+fn property_matches_value(prop: &Value, target: &str) -> bool {
+    // Try common value fields
+    for key in ["text", "number", "select", "url", "email", "phone"] {
+        if let Some(val) = prop.get(key) {
+            if val.as_str().map_or(false, |s| s.eq_ignore_ascii_case(target)) {
+                return true;
+            }
+            if val.as_f64().map_or(false, |n| n.to_string() == target) {
+                return true;
+            }
+        }
+    }
+    // checkbox
+    if let Some(val) = prop.get("checkbox") {
+        if val.as_bool().map_or(false, |b| b.to_string() == target) {
+            return true;
+        }
+    }
+    false
 }
