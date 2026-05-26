@@ -258,12 +258,22 @@ pub enum ObjectsCommand {
         /// Filter by name (substring match).
         #[arg(long)]
         name: Option<String>,
+        /// Find objects missing a property.
+        #[arg(long)]
+        missing_property: Option<String>,
         /// Output only object IDs.
         #[arg(long)]
         ids_only: bool,
         /// Output only object names.
         #[arg(long)]
         names_only: bool,
+    },
+    /// Count objects grouped by type or property.
+    Count {
+        space: String,
+        /// Group by: "type" or "property:<key>".
+        #[arg(long)]
+        group_by: Option<String>,
     },
 }
 

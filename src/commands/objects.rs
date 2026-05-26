@@ -226,6 +226,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             tag_property,
             property,
             name,
+            missing_property,
             ids_only,
             names_only,
         } => {
@@ -284,6 +285,17 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                 });
             }
 
+            // Post-filter: missing property
+            if let Some(missing_prop) = &missing_property {
+                results.retain(|obj| {
+                    !obj.properties.iter().any(|p| {
+                        p.get("key")
+                            .and_then(Value::as_str)
+                            .map_or(false, |k| k.eq_ignore_ascii_case(missing_prop))
+                    })
+                });
+            }
+
             // Output
             if ids_only {
                 for obj in &results {
@@ -298,6 +310,128 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             }
             Ok(())
         }
+        ObjectsCommand::Count { space, group_by } => {
+            let id = resolve_space(client, &space).await?;
+            let req = SearchRequest {
+                query: String::new(),
+                types: Vec::new(),
+                filters: None,
+                sort: None,
+            };
+            let results = client.space_search_page(&id, &req, None).await?.data;
+
+            match group_by.as_deref() {
+                Some("type") => {
+                    let mut counts: std::collections::BTreeMap<String, usize> =
+                        std::collections::BTreeMap::new();
+                    for obj in &results {
+                        let type_name = obj
+                            .object_type
+                            .as_ref()
+                            .map(|t| if t.key.is_empty() { t.name.clone() } else { t.key.clone() })
+                            .unwrap_or_else(|| "(none)".to_string());
+                        *counts.entry(type_name).or_insert(0) += 1;
+                    }
+                    for (name, count) in &counts {
+                        println!("{name}: {count}");
+                    }
+                    println!("---");
+                    println!("total: {}", results.len());
+                }
+                Some(group) if group.starts_with("property:") => {
+                    let prop_key = &group["property:".len()..];
+                    let mut counts: std::collections::BTreeMap<String, usize> =
+                        std::collections::BTreeMap::new();
+                    let mut missing = 0usize;
+                    for obj in &results {
+                        let val = obj
+                            .properties
+                            .iter()
+                            .find(|p| {
+                                p.get("key")
+                                    .and_then(Value::as_str)
+                                    .map_or(false, |k| k.eq_ignore_ascii_case(prop_key))
+                            })
+                            .map(display_property_value)
+                            .unwrap_or_default();
+                        if val.is_empty() {
+                            missing += 1;
+                        } else {
+                            *counts.entry(val).or_insert(0) += 1;
+                        }
+                    }
+                    for (val, count) in &counts {
+                        println!("{val}: {count}");
+                    }
+                    if missing > 0 {
+                        println!("(missing): {missing}");
+                    }
+                    println!("---");
+                    println!("total: {}", results.len());
+                }
+                Some(other) => {
+                    return Err(anyhow!(
+                        "invalid --group-by: '{other}'. Use 'type' or 'property:<key>'"
+                    ));
+                }
+                None => {
+                    println!("{}", results.len());
+                }
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Format a property value for human-readable display.
+fn display_property_value(prop: &Value) -> String {
+    for key in ["text", "url", "email", "phone"] {
+        if let Some(val) = prop.get(key).and_then(Value::as_str) {
+            return val.to_string();
+        }
+    }
+    if let Some(val) = prop.get("number") {
+        return val.to_string();
+    }
+    if let Some(val) = prop.get("select").and_then(Value::as_str) {
+        return val.to_string();
+    }
+    if let Some(arr) = prop.get("multi_select").and_then(Value::as_array) {
+        let names: Vec<String> = arr
+            .iter()
+            .map(|v| {
+                v.get("name")
+                    .and_then(Value::as_str)
+                    .or_else(|| v.as_str())
+                    .unwrap_or("?")
+                    .to_string()
+            })
+            .collect();
+        return names.join(", ");
+    }
+    if let Some(val) = prop.get("checkbox").and_then(Value::as_bool) {
+        return val.to_string();
+    }
+    if let Some(val) = prop.get("date").and_then(Value::as_str) {
+        return val.to_string();
+    }
+    // fallback: raw JSON
+    serde_json::to_string(prop).unwrap_or_default()
+}
+
+/// Print object properties in human-readable format.
+pub fn print_properties(props: &[Value]) {
+    for prop in props {
+        let key = prop
+            .get("key")
+            .and_then(Value::as_str)
+            .unwrap_or("?");
+        let name = prop
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or(key);
+        let value = display_property_value(prop);
+        println!("  {name}: {value}");
     }
 }
 
