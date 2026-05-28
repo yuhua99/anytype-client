@@ -58,6 +58,7 @@ Tasks:
 - [x] Move search workflow into `services/search.rs`.
 - [x] Move object workflows into `services/objects.rs`:
   - [x] Move `find` and `count` workflows.
+  - [x] Split count aggregation into `services/objects/counts.rs`.
   - [x] Move tag ID merge workflow.
   - [x] Move bulk update workflow:
     - [x] Move target object ID loading.
