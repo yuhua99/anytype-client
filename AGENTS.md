@@ -102,8 +102,17 @@ Required test classes:
 - CLI parse/help smoke tests.
 - Request body serialization tests.
 - Serde round-trip tests for core models.
-- Legacy compatibility tests for documented raw JSON escape hatches.
 - Output rendering tests for stable json/yaml/table behavior.
+
+## Toolchain and quality gates
+
+This project tracks stable Rust via `rust-toolchain.toml`.
+
+Policy:
+- Use stable Rust.
+- Keep `rustfmt` and `clippy` installed.
+- `Cargo.toml` currently uses edition 2024.
+- CI is source of truth for accepted toolchain behavior.
 
 Quality gates must pass before commit:
 
