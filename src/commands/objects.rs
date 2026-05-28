@@ -1,7 +1,7 @@
 use crate::{
     api::AnytypeClient,
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
-    output::{eprint_status, print_data, print_one},
+    output::{eprint_status, print_count_total, print_data, print_grouped_counts, print_one},
     services::objects::{
         self, BulkUpdateParams, BulkUpdateResult, CreateObjectParams, FindObjectsParams,
         ObjectCountResult, UpdateObjectParams,
@@ -195,50 +195,12 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
         }
         ObjectsCommand::Count { space, group_by } => {
             match objects::count_objects(client, space, group_by).await? {
-                ObjectCountResult::Total(total) => match output {
-                    OutputFormat::Json => println!("{{\"total\": {total}}}"),
-                    OutputFormat::Yaml => println!("total: {total}"),
-                    OutputFormat::Table => println!("{total}"),
-                },
+                ObjectCountResult::Total(total) => print_count_total(total, output)?,
                 ObjectCountResult::Grouped { counts, total } => {
-                    print_counts(&counts, total, output)?;
+                    print_grouped_counts(&counts, total, output)?;
                 }
             }
             Ok(())
         }
     }
-}
-
-/// Print grouped counts respecting output format.
-fn print_counts(
-    counts: &std::collections::BTreeMap<String, usize>,
-    total: usize,
-    output: &OutputFormat,
-) -> Result<()> {
-    match output {
-        OutputFormat::Json => {
-            let mut map = serde_json::Map::new();
-            for (key, count) in counts {
-                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
-            }
-            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
-            println!("{}", serde_json::to_string_pretty(&map)?);
-        }
-        OutputFormat::Yaml => {
-            let mut map = serde_json::Map::new();
-            for (key, count) in counts {
-                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
-            }
-            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
-            println!("{}", serde_yaml::to_string(&map)?);
-        }
-        OutputFormat::Table => {
-            for (name, count) in counts {
-                println!("{name}: {count}");
-            }
-            println!("---");
-            println!("total: {total}");
-        }
-    }
-    Ok(())
 }

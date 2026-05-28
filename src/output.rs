@@ -60,3 +60,49 @@ pub fn print_success(msg: impl std::fmt::Display) {
 pub fn eprint_status(msg: impl std::fmt::Display) {
     eprintln!("{msg}");
 }
+
+/// Print a simple total count respecting the output format.
+/// Used by object count command (non-grouped case).
+pub fn print_count_total(total: usize, output: &OutputFormat) -> Result<()> {
+    match output {
+        OutputFormat::Json => println!("{{\"total\": {total}}}"),
+        OutputFormat::Yaml => println!("total: {total}"),
+        OutputFormat::Table => println!("{total}"),
+    }
+    Ok(())
+}
+
+/// Print grouped counts (by type or property) respecting the output format.
+/// Used by object count command (grouped case). Exact output shape preserved for CLI compatibility.
+pub fn print_grouped_counts(
+    counts: &std::collections::BTreeMap<String, usize>,
+    total: usize,
+    output: &OutputFormat,
+) -> Result<()> {
+    match output {
+        OutputFormat::Json => {
+            let mut map = serde_json::Map::new();
+            for (key, count) in counts {
+                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
+            }
+            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
+            println!("{}", serde_json::to_string_pretty(&map)?);
+        }
+        OutputFormat::Yaml => {
+            let mut map = serde_json::Map::new();
+            for (key, count) in counts {
+                map.insert(key.clone(), serde_json::Value::Number((*count).into()));
+            }
+            map.insert("total".to_string(), serde_json::Value::Number(total.into()));
+            println!("{}", serde_yaml::to_string(&map)?);
+        }
+        OutputFormat::Table => {
+            for (name, count) in counts {
+                println!("{name}: {count}");
+            }
+            println!("---");
+            println!("total: {total}");
+        }
+    }
+    Ok(())
+}

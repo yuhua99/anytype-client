@@ -183,12 +183,12 @@ Exit criteria:
 - [x] Add output tests for representative objects.
   Added in `tests/output_rendering.rs`: exact-string json for `Space` + table for `Property` using real model instances (minimal construction, stable output).
 - [x] Standardize success messages.
-  Introduced `print_success`/`eprint_status` helpers in `src/output.rs` (thin, avoid over-engineering); converted clear non-data success/status messages (auth flows, collection add/remove, file download/delete, type delete, bulk update summaries). Raw data paths (ids-only/names-only, markdown export, count/grouped) and interactive prompts left as direct `println!` per scope. Preserves stdout/stderr semantics.
+  Introduced `print_success`/`eprint_status` helpers in `src/output.rs` (thin, avoid over-engineering); converted clear non-data success/status messages (auth flows, collection add/remove, file download/delete, type delete, bulk update summaries). Raw data paths (ids-only, names-only, markdown export) and interactive prompts left as direct `println!` per scope. Preserves stdout/stderr semantics.
 
 Exit criteria:
 
-- [ ] Changing output format does not touch command/service/API logic.
-  (Output enum + render fns isolate format choice; commands pass it through.)
+- [x] Changing output format does not touch command/service/API logic.
+  Count total/grouped rendering moved from `commands/objects.rs` (local `print_counts` + inline match) into `output.rs` helpers (`print_count_total`, `print_grouped_counts`). Commands now only dispatch to output fns after service call. Services/API have no rendering. Raw data compatibility paths (ids-only, names-only, markdown export) documented as intentional exceptions (for scripting/pipeability); they bypass normal output formatters by design.
 
 ---
 
