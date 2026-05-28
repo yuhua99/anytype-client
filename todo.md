@@ -28,11 +28,11 @@ Tests lock behavior before refactor.
   - [x] `cargo fmt --check`
   - [x] `cargo clippy --all-targets -- -D warnings`
   - [x] `cargo test`
-- [ ] Decide MSRV or document Rust toolchain policy.
+- [x] Decide MSRV or document Rust toolchain policy. See `rust-toolchain.toml` and `docs/development.md`.
 
 Exit criteria:
 
-- [ ] Refactor can begin with tests guarding current behavior.
+- [x] Refactor can begin with tests guarding current behavior.
 
 ---
 

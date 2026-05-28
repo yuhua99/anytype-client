@@ -8,7 +8,11 @@ use crate::{
 
 use super::{page_options, resolve_space};
 
-pub async fn run(client: &AnytypeClient, args: CollectionsArgs, output: &OutputFormat) -> Result<()> {
+pub async fn run(
+    client: &AnytypeClient,
+    args: CollectionsArgs,
+    output: &OutputFormat,
+) -> Result<()> {
     match args.command {
         CollectionsCommand::Views {
             space,
@@ -59,7 +63,9 @@ pub async fn run(client: &AnytypeClient, args: CollectionsArgs, output: &OutputF
             object_id,
         } => {
             let id = resolve_space(client, &space).await?;
-            client.remove_from_list(&id, &collection_id, &object_id).await?;
+            client
+                .remove_from_list(&id, &collection_id, &object_id)
+                .await?;
             println!(
                 "Successfully removed object {} from collection {}",
                 object_id, collection_id

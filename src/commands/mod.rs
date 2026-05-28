@@ -1,6 +1,6 @@
 mod auth;
-mod files;
 mod collections;
+mod files;
 mod members;
 mod objects;
 mod properties;
