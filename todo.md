@@ -91,12 +91,13 @@ Exit criteria:
   - [x] object layout
   - [ ] any repeated constrained string:
     - [x] object body format
-- [ ] Introduce newtypes for IDs if useful:
-  - [ ] `SpaceId`
-  - [ ] `ObjectId`
-  - [ ] `PropertyId`
-  - [ ] `TagId`
-  - [ ] `FileId`
+- [x] Introduce newtypes for IDs if useful:
+  - [x] Deferred `SpaceId`.
+  - [x] Deferred `ObjectId`.
+  - [x] Deferred `PropertyId`.
+  - [x] Deferred `TagId`.
+  - [x] Deferred `FileId`.
+  - Decision: keep IDs as `String` for now; current API/CLI passes opaque IDs and newtypes would add wrapper churn before clear misuse patterns.
 - [x] Use `serde_json::Value` only at explicit raw JSON boundaries.
 - [x] Add `deny_unknown_fields` where schema strictness is desired.
 - [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it:
