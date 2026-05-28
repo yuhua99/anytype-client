@@ -7,6 +7,9 @@ use tabled::Tabled;
 
 use super::{ExtraFields, Icon, PropertyLinkValue};
 
+/// Raw object property shape returned by Anytype.
+pub type RawObjectProperty = Value;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default)]
 #[serde(rename_all = "snake_case")]
 #[value(rename_all = "snake_case")]
@@ -65,7 +68,7 @@ pub struct Object {
     pub icon: Option<Icon>,
     #[serde(default)]
     #[tabled(skip)]
-    pub properties: Vec<Value>,
+    pub properties: Vec<RawObjectProperty>,
     #[serde(flatten)]
     #[tabled(skip)]
     pub extra: ExtraFields,

@@ -4,6 +4,9 @@ use tabled::Tabled;
 
 use super::{ExtraFields, Icon, Object, ObjectLayout, PropertyLink};
 
+/// Raw property definition shape returned by type endpoints.
+pub type RawPropertyDefinition = Value;
+
 #[derive(Debug, Serialize, Deserialize, Tabled)]
 pub struct ObjectType {
     #[serde(alias = "ID")]
@@ -24,7 +27,7 @@ pub struct ObjectType {
     pub is_hidden: bool,
     #[serde(default, alias = "properties")]
     #[tabled(skip)]
-    pub property_definitions: Vec<Value>,
+    pub property_definitions: Vec<RawPropertyDefinition>,
     #[serde(default)]
     #[tabled(skip)]
     pub icon: Option<Icon>,

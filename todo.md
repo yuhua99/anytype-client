@@ -97,7 +97,7 @@ Exit criteria:
   - [ ] `PropertyId`
   - [ ] `TagId`
   - [ ] `FileId`
-- [ ] Use `serde_json::Value` only at explicit raw JSON boundaries.
+- [x] Use `serde_json::Value` only at explicit raw JSON boundaries.
 - [ ] Add `deny_unknown_fields` where schema strictness is desired.
 - [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it:
   - [x] Downgrade internal root modules (`commands`, `config`, `services`).

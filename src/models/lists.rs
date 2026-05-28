@@ -15,6 +15,11 @@ where
 pub type ViewListResponse = DataResponse<ListView>;
 pub type ObjectListResponse = DataResponse<Object>;
 
+/// Raw list filter shape returned by Anytype views.
+pub type RawListFilter = Value;
+/// Raw list sort shape returned by Anytype views.
+pub type RawListSort = Value;
+
 #[derive(Debug, Serialize)]
 pub struct AddToListRequest<'a> {
     pub objects: &'a [String],
@@ -27,10 +32,10 @@ pub struct ListView {
     pub layout: String,
     #[serde(default, deserialize_with = "null_or_default")]
     #[tabled(skip)]
-    pub filters: Vec<Value>,
+    pub filters: Vec<RawListFilter>,
     #[serde(default, deserialize_with = "null_or_default")]
     #[tabled(skip)]
-    pub sorts: Vec<Value>,
+    pub sorts: Vec<RawListSort>,
     #[serde(flatten)]
     #[tabled(skip)]
     pub extra: ExtraFields,

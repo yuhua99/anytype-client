@@ -4,6 +4,7 @@ use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+/// Unknown fields preserved for forward-compatible API responses.
 pub type ExtraFields = BTreeMap<String, Value>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
