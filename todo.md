@@ -114,22 +114,22 @@ Exit criteria:
 
 ## Phase 3 — Request builders and parsing boundaries
 
-- [ ] Add builders or constructors for complex requests:
+- [x] Add builders or constructors for complex requests:
   - [x] `SearchRequest`
   - [x] `CreateObjectRequest`
   - [x] `UpdateObjectRequest`
   - [x] property update payloads
-- [ ] Move CLI JSON parsing into named parser modules:
+- [x] Move CLI JSON parsing into named parser modules:
   - [x] raw object parsing in `commands/property_values.rs`
   - [x] property parsing in `commands/property_values.rs`
   - [x] filter parsing in `commands/filter_parsing.rs`
-- [ ] Return actionable errors with arg name and example.
-- [ ] Avoid silent fallback except explicitly documented compatibility paths.
+- [x] Return actionable errors with arg name and example.
+- [x] Avoid silent fallback except explicitly documented compatibility paths.
 - [x] Add tests for each parser module.
 
 Exit criteria:
 
-- [ ] Request construction logic has unit tests and is not duplicated across commands.
+- [x] Request construction logic has unit tests and is not duplicated across commands.
 
 ---
 
