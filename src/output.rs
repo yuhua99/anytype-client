@@ -4,6 +4,12 @@ use tabled::{Table, Tabled, settings::Style};
 
 use crate::cli::OutputFormat;
 
+/// Output rendering contract (Phase 5):
+/// - `Json`: machine-stable, pretty-printed JSON for scripting/automation/CI.
+/// - `Yaml`: machine-stable YAML for human+machine or config use.
+/// - `Table`: human-friendly tabular output using `tabled` with sharp style for CLI display.
+///
+/// All formatting lives here. Commands call these after fetching data; services/API never render.
 pub fn render_data<T>(data: Vec<T>, output: &OutputFormat) -> Result<String>
 where
     T: Serialize + Tabled,

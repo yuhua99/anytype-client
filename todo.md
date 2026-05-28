@@ -171,18 +171,22 @@ Exit criteria:
 
 ## Phase 5 — Output/rendering cleanup
 
-- [ ] Define output contract:
-  - [ ] json: machine-stable
-  - [ ] yaml: machine-stable
-  - [ ] table: human-friendly
-- [ ] Move all table formatting into output modules.
-- [ ] Avoid printing inside services/API.
+- [x] Define output contract:
+  - [x] json: machine-stable (pretty JSON via serde_json)
+  - [x] yaml: machine-stable (via serde_yaml)
+  - [x] table: human-friendly (tabled + sharp style)
+  Documented in `src/output.rs` module comment.
+- [x] Move all table formatting into output modules.
+  Verified: `Table::new` + `Style` only in `src/output.rs`; models use only `#[derive(Tabled)]` + `#[tabled(skip)]` attrs.
+- [x] Avoid printing inside services/API.
+  Verified: zero `println!`/`print_*`/`output::` in `src/{services,api}/**`; confined to thin `src/commands/*` orchestration.
 - [ ] Add output tests for representative objects.
 - [ ] Standardize success messages.
 
 Exit criteria:
 
 - [ ] Changing output format does not touch command/service/API logic.
+  (Output enum + render fns isolate format choice; commands pass it through.)
 
 ---
 
