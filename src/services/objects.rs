@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, path::PathBuf};
 
 use anyhow::{Result, anyhow};
 use serde_json::Value;
@@ -141,6 +141,53 @@ pub(crate) async fn get_object_tag_ids(
                 .collect()
         })
         .unwrap_or_default())
+}
+
+/// Collect object IDs from --ids-file, --ids, or search query.
+pub(crate) async fn load_object_ids(
+    ids_file: &Option<PathBuf>,
+    ids: &[String],
+    query: &Option<String>,
+    types: &[String],
+    client: &AnytypeClient,
+    space_id: &str,
+) -> Result<Vec<String>> {
+    let mut result = Vec::new();
+
+    if let Some(path) = ids_file {
+        let content = std::fs::read_to_string(path)
+            .map_err(|err| anyhow!("failed to read ids file {:?}: {err}", path))?;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if !trimmed.is_empty() {
+                result.push(trimmed.to_string());
+            }
+        }
+    }
+
+    for id in ids {
+        for part in id.split(',') {
+            let trimmed = part.trim();
+            if !trimmed.is_empty() {
+                result.push(trimmed.to_string());
+            }
+        }
+    }
+
+    if result.is_empty() {
+        let req = SearchRequest {
+            query: query.clone().unwrap_or_default(),
+            types: types.to_vec(),
+            filters: None,
+            sort: None,
+        };
+        let resp = client.space_search_page(space_id, &req, None).await?;
+        result = resp.data.into_iter().map(|object| object.id).collect();
+    }
+
+    result.sort();
+    result.dedup();
+    Ok(result)
 }
 
 pub async fn count_objects(

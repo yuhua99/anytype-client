@@ -1,9 +1,7 @@
-use std::path::PathBuf;
-
 use crate::{
     api::AnytypeClient,
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
-    models::{CreateObjectRequest, SearchRequest, UpdateObjectRequest},
+    models::{CreateObjectRequest, UpdateObjectRequest},
     output::{print_data, print_one},
     services::{
         objects::{self, FindObjectsParams, ObjectCountResult},
@@ -134,7 +132,8 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             let id = resolve_space(client, &space).await?;
 
             // Collect target object IDs
-            let object_ids = load_object_ids(&ids_file, &ids, &query, &types, client, &id).await?;
+            let object_ids =
+                objects::load_object_ids(&ids_file, &ids, &query, &types, client, &id).await?;
             if object_ids.is_empty() {
                 eprintln!("no objects matched");
                 return Ok(());
@@ -308,51 +307,4 @@ fn print_counts(
         }
     }
     Ok(())
-}
-
-/// Collect object IDs from --ids-file, --ids, or search query.
-async fn load_object_ids(
-    ids_file: &Option<PathBuf>,
-    ids: &[String],
-    query: &Option<String>,
-    types: &[String],
-    client: &AnytypeClient,
-    space_id: &str,
-) -> Result<Vec<String>> {
-    let mut result = Vec::new();
-
-    if let Some(path) = ids_file {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| anyhow!("failed to read ids file {:?}: {e}", path))?;
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if !trimmed.is_empty() {
-                result.push(trimmed.to_string());
-            }
-        }
-    }
-
-    for id in ids {
-        for part in id.split(',') {
-            let trimmed = part.trim();
-            if !trimmed.is_empty() {
-                result.push(trimmed.to_string());
-            }
-        }
-    }
-
-    if result.is_empty() {
-        let req = SearchRequest {
-            query: query.clone().unwrap_or_default(),
-            types: types.to_vec(),
-            filters: None,
-            sort: None,
-        };
-        let resp = client.space_search_page(space_id, &req, None).await?;
-        result = resp.data.into_iter().map(|o| o.id).collect();
-    }
-
-    result.sort();
-    result.dedup();
-    Ok(result)
 }
