@@ -18,7 +18,7 @@ impl AnytypeClient {
     ) -> Result<DataResponse<Object>> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/objects"),
+            &super::space_objects_path(space_id),
             Option::<&()>::None,
             page,
         )
@@ -32,7 +32,7 @@ impl AnytypeClient {
     ) -> Result<ObjectResponse> {
         self.request(
             Method::POST,
-            &format!("/spaces/{space_id}/objects"),
+            &super::space_objects_path(space_id),
             Some(req),
         )
         .await
@@ -45,8 +45,8 @@ impl AnytypeClient {
         format: Option<&str>,
     ) -> Result<ObjectResponse> {
         let path = match format {
-            Some(format) => format!("/spaces/{space_id}/objects/{object_id}?format={format}"),
-            None => format!("/spaces/{space_id}/objects/{object_id}"),
+            Some(f) => super::space_object_path_with_format(space_id, object_id, f),
+            None => super::space_object_path(space_id, object_id),
         };
         self.request(Method::GET, &path, Option::<&()>::None).await
     }
@@ -59,7 +59,7 @@ impl AnytypeClient {
     ) -> Result<ObjectResponse> {
         self.request(
             Method::PATCH,
-            &format!("/spaces/{space_id}/objects/{object_id}"),
+            &super::space_object_path(space_id, object_id),
             Some(req),
         )
         .await
@@ -68,7 +68,7 @@ impl AnytypeClient {
     pub async fn delete_object(&self, space_id: &str, object_id: &str) -> Result<ObjectResponse> {
         self.request(
             Method::DELETE,
-            &format!("/spaces/{space_id}/objects/{object_id}"),
+            &super::space_object_path(space_id, object_id),
             Option::<&()>::None,
         )
         .await

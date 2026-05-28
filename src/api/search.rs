@@ -14,7 +14,7 @@ impl AnytypeClient {
         req: &SearchRequest,
         page: Option<PageOptions>,
     ) -> Result<SearchResponse> {
-        self.request_data(Method::POST, "/search", Some(req), page)
+        self.request_data(Method::POST, super::global_search_path(), Some(req), page)
             .await
     }
 
@@ -34,7 +34,7 @@ impl AnytypeClient {
     ) -> Result<SearchResponse> {
         self.request_data(
             Method::POST,
-            &format!("/spaces/{space_id}/search"),
+            &super::space_search_path(space_id),
             Some(req),
             page,
         )
