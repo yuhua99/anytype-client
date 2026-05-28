@@ -27,7 +27,10 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
         } => {
             let id = resolve_space(client, &space).await?;
             print_one(
-                client.object(&id, &object_id, Some(&format)).await?.object,
+                client
+                    .object(&id, &object_id, Some(format.as_str()))
+                    .await?
+                    .object,
                 output,
             )
         }
@@ -95,7 +98,10 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             format,
         } => {
             let id = resolve_space(client, &space).await?;
-            let obj = client.object(&id, &object_id, Some(&format)).await?.object;
+            let obj = client
+                .object(&id, &object_id, Some(format.as_str()))
+                .await?
+                .object;
             if matches!(output, OutputFormat::Json | OutputFormat::Yaml) {
                 print_one(obj, output)
             } else {

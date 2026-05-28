@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
@@ -32,6 +32,25 @@ pub enum OutputFormat {
     Table,
     Json,
     Yaml,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum ObjectBodyFormat {
+    Md,
+}
+
+impl ObjectBodyFormat {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Md => "md",
+        }
+    }
+}
+
+impl fmt::Display for ObjectBodyFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Args)]
@@ -161,8 +180,8 @@ pub enum ObjectsCommand {
     Get {
         space: String,
         object_id: String,
-        #[arg(long, default_value = "md", value_parser = ["md"])]
-        format: String,
+        #[arg(long, value_enum, default_value_t = ObjectBodyFormat::Md)]
+        format: ObjectBodyFormat,
     },
     Create {
         space: String,
@@ -209,8 +228,8 @@ pub enum ObjectsCommand {
     Export {
         space: String,
         object_id: String,
-        #[arg(long, default_value = "md", value_parser = ["md"])]
-        format: String,
+        #[arg(long, value_enum, default_value_t = ObjectBodyFormat::Md)]
+        format: ObjectBodyFormat,
     },
     /// Batch update multiple objects by IDs or search query.
     UpdateMany {

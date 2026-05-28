@@ -89,7 +89,8 @@ Exit criteria:
   - [x] property format
   - [x] icon color
   - [x] object layout
-  - [ ] any repeated constrained string
+  - [ ] any repeated constrained string:
+    - [x] object body format
 - [ ] Introduce newtypes for IDs if useful:
   - [ ] `SpaceId`
   - [ ] `ObjectId`
