@@ -40,7 +40,21 @@ anyclient spaces update SPACE [--name NAME] [--description DESC]
 anyclient objects list SPACE [--limit N] [--offset N]
 anyclient objects get SPACE OBJECT_ID [--format md]
 anyclient objects create SPACE --name NAME [--type TYPE] [--body BODY] [--template TEMPLATE] [ICON] [PROPERTIES]
+
+Example:
+```bash
+anyclient objects create space-id --name "My Task" --type task \
+  --property '{"key":"status","text":"done"}' \
+  --property '{"key":"tags","multi_select":["tag1","tag2"]}' -o json
+```
 anyclient objects update SPACE OBJECT_ID [--name NAME] [--type TYPE] [--markdown BODY] [ICON] [PROPERTIES] [--tag-property PROP --tag-add TAG --tag-remove TAG]
+
+Example (properties + tags):
+```bash
+anyclient objects update space-id obj-id --name Updated \
+  --tag-property status --tag-add done \
+  --property '{"key":"title","text":"foo"}' -o json
+```
 anyclient objects delete SPACE OBJECT_ID
 anyclient objects export SPACE OBJECT_ID [--format md]
 anyclient objects update-many SPACE [--ids-file PATH] [--ids ID1,ID2] [--query QUERY] [--types TYPE1,TYPE2] [--tag-property PROP] [--tag-add TAG] [--tag-remove TAG] [--dry-run]
@@ -62,7 +76,13 @@ anyclient search --space abc123 \
   -o json
 ```
 
-Legacy raw filter JSON remains accepted and is forwarded unchanged.
+Legacy raw filter example (preserved for compatibility):
+
+```bash
+anyclient search --filters '{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}' -o json
+```
+
+Typed filter expressions (with `operator`/`conditions`) are also accepted and validated strictly.
 
 ## Types
 
@@ -92,6 +112,11 @@ anyclient properties delete SPACE PROPERTY_ID
 anyclient tags list SPACE PROPERTY_ID [--limit N] [--offset N]
 anyclient tags get SPACE PROPERTY_ID TAG_ID
 anyclient tags create SPACE PROPERTY_ID --name NAME --color grey|yellow|orange|red|pink|purple|blue|ice|teal|lime [--key KEY]
+
+Example:
+```bash
+anyclient tags create space-id prop-id --name done --color lime -o json
+```
 anyclient tags update SPACE PROPERTY_ID TAG_ID [--name NAME] [--color COLOR] [--key KEY]
 anyclient tags delete SPACE PROPERTY_ID TAG_ID
 ```
@@ -100,6 +125,11 @@ anyclient tags delete SPACE PROPERTY_ID TAG_ID
 
 ```bash
 anyclient files upload SPACE PATH
+
+Example:
+```bash
+anyclient files upload space-id photo.png -o json
+```
 anyclient files download SPACE FILE_ID --output PATH [--width N] [--force]
 anyclient files delete SPACE FILE_ID [--skip-bin]
 ```

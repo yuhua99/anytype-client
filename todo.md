@@ -206,13 +206,15 @@ Exit criteria:
 
 ## Phase 7 — Docs and examples as tests
 
-- [ ] Update `skills/anyclient/SKILL.md` examples.
-- [ ] Add docs examples for:
-  - [ ] search filters typed
-  - [ ] search filters legacy raw
-  - [ ] object create/update properties
-  - [ ] tags
-  - [ ] files
+- [x] Update `skills/anyclient/SKILL.md` examples.
+  Added typed filter example (complements legacy raw); property values section already covered multi_select etc.
+- [x] Add docs examples for:
+  - [x] search filters typed (already present + expanded)
+  - [x] search filters legacy raw (added concrete example)
+  - [x] object create/update properties (added concrete --property examples matching tests)
+  - [x] tags (added create example)
+  - [x] files (added upload example)
+  All examples in `docs/cli-commands.md` now align with parse tests in `tests/cli_smoke.rs`.
 - [ ] Add smoke test script for examples where possible.
 - [x] Ensure every documented command still parses.
   Added parse tests in `tests/cli_smoke.rs` exercising documented examples from `docs/cli-commands.md` and `skills/anyclient/SKILL.md`:

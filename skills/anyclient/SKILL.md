@@ -120,8 +120,14 @@ anyclient objects create abc123 --name "Research AI" \
 
 ### Search with filters
 
+Legacy raw:
 ```bash
 anyclient search --space abc123 --filters '{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}' -o json
+```
+
+Typed (preferred for new usage):
+```bash
+anyclient search --space abc123 --filters '{"operator":"and","conditions":[{"property_key":"status","condition":"eq","select":"done"}]}' -o json
 ```
 
 ### Upload then attach file
