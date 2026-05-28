@@ -11,13 +11,11 @@ fn serializes_search_request_body() {
         query: "task".into(),
         types: vec!["page".into(), "task".into()],
         filters: Some(
-            FilterExpression::and()
-                .condition(FilterItem::Select(SelectFilterItem {
-                    property_key: "status".into(),
-                    condition: FilterCondition::Eq,
-                    select: "done".into(),
-                }))
-                .into(),
+            FilterExpression::and().condition(FilterItem::Select(SelectFilterItem {
+                property_key: "status".into(),
+                condition: FilterCondition::Eq,
+                select: "done".into(),
+            })),
         ),
         sort: Some(SortOptions {
             property_key: SortProperty::LastModifiedDate,

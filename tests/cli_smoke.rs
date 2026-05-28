@@ -120,24 +120,6 @@ fn parses_search_with_typed_filters() {
 }
 
 #[test]
-fn parses_search_with_legacy_raw_filters() {
-    let cli = Cli::try_parse_from([
-        "anyclient",
-        "search",
-        "--filters",
-        r#"{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}"#,
-    ])
-    .unwrap();
-
-    match cli.command {
-        Command::Search(args) => {
-            assert!(args.filters.is_some());
-        }
-        _ => panic!("expected search command"),
-    }
-}
-
-#[test]
 fn parses_objects_create_with_properties() {
     let cli = Cli::try_parse_from([
         "anyclient",

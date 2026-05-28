@@ -15,7 +15,7 @@ CLI for Anytype.
 
 | Command | Notes |
 |---|---|
-| `anyclient search [-o json]` | `--query Q`, `--types T`, `--sort created_date|last_modified_date|last_opened_date|name`, `--direction asc|desc`, `--filters JSON`, `--space ID`, `--limit N`, `--offset N` |
+| `anyclient search [-o json]` | `--query Q`, `--types T`, `--sort created_date|last_modified_date|last_opened_date|name` (typed enum), `--direction asc|desc`, `--filters JSON` (typed only), `--space ID`, `--limit N`, `--offset N` |
 
 ### Spaces
 
@@ -33,22 +33,27 @@ CLI for Anytype.
 | `anyclient objects list SPACE [-o json]` | |
 | `anyclient objects get SPACE OBJ_ID [-o json]` | `--format md` (default) |
 | `anyclient objects export SPACE OBJ_ID [-o json]` | `--format md`. Returns markdown body. |
-| `anyclient objects create SPACE --name NAME [-o json]` | `--type TYPE` (default `page`), `--body BODY`, `--icon-emoji E`, `--template T`, `--property JSON` (repeatable) |
-| `anyclient objects update SPACE OBJ_ID [-o json]` | `--name`, `--type`, `--markdown`, `--icon-emoji`, `--icon-file ID`, `--icon-name N`, `--icon-color C`, `--clear-icon`, `--property JSON` |
+| `anyclient objects create SPACE --name NAME [-o json]` | `--type TYPE` (default `page`), `--body BODY`, `--icon-emoji E`, `--template T`, `--property JSON` (repeatable), `--properties-json` |
+| `anyclient objects update SPACE OBJ_ID [-o json]` | `--name`, `--type`, `--markdown`, icons, `--clear-icon`, `--property JSON` (repeatable). Tag helpers: `--tag-property PROP --tag-add TAG [--tag-remove TAG]` (repeatable) |
 | `anyclient objects delete SPACE OBJ_ID [-o json]` | |
+| `anyclient objects find SPACE [-o json]` | Simplified search: `--type`, `--tag TAG --tag-property PROP`, `--property key=value`, `--name SUBSTR`, `--missing-property KEY`, `--ids-only`, `--names-only` |
+| `anyclient objects count SPACE --group-by type|property:KEY [-o json]` | Count grouped by type or property |
+| `anyclient objects update-many SPACE [-o json]` | Bulk: `--ids ID,ID` or `--ids-file FILE` or `--query Q --types T`, tag helpers `--tag-property P --tag-add/--tag-remove`, `--dry-run` |
 
 #### Property values in create/update
 
 `--property` is repeatable. Each value is a JSON object:
 
 ```bash
---property '{"id":"<prop-id>","key":"status","text":"done"}'
+--property '{"key":"status","select":"<tag-id>"}'
 --property '{"key":"tags","multi_select":["<tag-id-1>","<tag-id-2>"]}'
 ```
 
 Or `--properties-json` with a JSON array of all properties at once.
 
 Icon colors: `grey yellow orange red pink purple blue ice teal lime`
+
+**Note**: `--sort`, `--direction`, `--layout`, `--format`, `--icon-color` and similar are strongly-typed enums (use the snake_case values shown in `--help`).
 
 ### Types
 
@@ -68,7 +73,7 @@ Icon colors: `grey yellow orange red pink purple blue ice teal lime`
 |---|---|
 | `anyclient properties list SPACE [-o json]` | |
 | `anyclient properties get SPACE PROP_ID [-o json]` | |
-| `anyclient properties create SPACE --name NAME --format FMT [-o json]` | Format: `text number select multi_select date files checkbox url email phone objects`. Also `--key`, `--tag` |
+| `anyclient properties create SPACE --name NAME --format FMT [-o json]` | Format: `text number select multi_select date files checkbox url email phone objects`. Also `--key`, `--tag`, `--tags-json` |
 | `anyclient properties update SPACE PROP_ID --name NAME [-o json]` | Also `--key` |
 | `anyclient properties delete SPACE PROP_ID [-o json]` | |
 
@@ -118,14 +123,8 @@ anyclient objects create abc123 --name "Research AI" \
   -o json
 ```
 
-### Search with filters
+### Search with filters (typed only)
 
-Legacy raw:
-```bash
-anyclient search --space abc123 --filters '{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}' -o json
-```
-
-Typed (preferred for new usage):
 ```bash
 anyclient search --space abc123 --filters '{"operator":"and","conditions":[{"property_key":"status","condition":"eq","select":"done"}]}' -o json
 ```
@@ -145,6 +144,12 @@ List commands auto-paginate (all results). For single-page control:
 
 ```bash
 anyclient objects list abc123 --limit 10 --offset 20 -o json
+```
+
+### Scripting-friendly find (IDs only)
+
+```bash
+anyclient objects find abc123 --type task --tag-property "Tags" --tag "urgent" --ids-only -o json | jq -r '.[]'
 ```
 
 ## IDs

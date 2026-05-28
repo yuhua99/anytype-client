@@ -22,7 +22,6 @@ Tests lock behavior before refactor.
 - [x] Add smoke tests for top-level CLI parse/help. See `tests/cli_smoke.rs`.
 - [x] Add request-body serialization tests for every API endpoint with JSON request bodies. See `tests/request_serialization.rs`.
 - [x] Add serde round-trip tests for core models. See `tests/model_serde.rs`.
-- [x] Add legacy compatibility tests for raw JSON inputs. See `tests/legacy_compatibility.rs`.
 - [x] Add golden/snapshot tests for table/json/yaml output where stable. See `tests/output_rendering.rs`.
 - [x] Add CI command list. See `.github/workflows/ci.yml`:
   - [x] `cargo fmt --check`
@@ -207,10 +206,9 @@ Exit criteria:
 ## Phase 7 — Docs and examples as tests
 
 - [x] Update `skills/anyclient/SKILL.md` examples.
-  Added typed filter example (complements legacy raw); property values section already covered multi_select etc.
+  Updated for typed-only filters and current CLI surface (find, count, update-many, tag helpers).
 - [x] Add docs examples for:
-  - [x] search filters typed (already present + expanded)
-  - [x] search filters legacy raw (added concrete example)
+  - [x] search filters typed (only supported shape)
   - [x] object create/update properties (added concrete --property examples matching tests)
   - [x] tags (added create example)
   - [x] files (added upload example)
@@ -220,15 +218,14 @@ Exit criteria:
 - [x] Ensure every documented command still parses.
   Added parse tests in `tests/cli_smoke.rs` exercising documented examples from `docs/cli-commands.md` and `skills/anyclient/SKILL.md`:
   - search with typed filters (operator/conditions)
-  - search with legacy raw filters
   - objects create with repeatable --property JSON (incl multi_select)
   - objects update with --property + --tag-property/--tag-add
-  (covers search filters typed/legacy, object properties, tags; no network required; validates clap surface).
+  (covers search filters typed, object properties, tags; no network required; validates clap surface).
 
 Exit criteria:
 
 - [x] Docs cannot silently rot.
-  Docs examples (in `docs/cli-commands.md` and `skills/anyclient/SKILL.md`) aligned to parse tests in `tests/cli_smoke.rs`; `cargo test` (cli_smoke suite) covers the documented command surfaces (typed/legacy filters, object properties, tags, etc.) to prevent silent CLI rot.
+  Docs examples (in `docs/cli-commands.md` and `skills/anyclient/SKILL.md`) aligned to parse tests in `tests/cli_smoke.rs`; `cargo test` (cli_smoke suite) covers the documented command surfaces (typed filters, object properties, tags, etc.) to prevent silent CLI rot.
 
 ---
 

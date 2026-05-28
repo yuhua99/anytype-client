@@ -3,8 +3,8 @@ use serde_json::Value;
 
 use crate::models::{FilterExpression, SearchFilters};
 
-/// Parses --filters as JSON.
-/// Typed FilterExpression input is kept typed; legacy/raw JSON is passed through unchanged.
+/// Parses --filters as JSON into a strict typed FilterExpression.
+/// Only the new typed shape (with "operator" and "conditions") is accepted.
 pub(super) fn parse_filters(filters: Option<String>) -> Result<Option<SearchFilters>> {
     let Some(filters) = filters else {
         return Ok(None);
@@ -13,8 +13,8 @@ pub(super) fn parse_filters(filters: Option<String>) -> Result<Option<SearchFilt
     let value: Value = serde_json::from_str(&filters).map_err(|err| {
         anyhow!(
             "invalid JSON for --filters: {err}\n\
-             Expected a JSON object.\n\
-             Typed example: {{\"operator\":\"and\",\"conditions\":[{{\"property_key\":\"status\",\"condition\":\"eq\",\"select\":\"<tag-id>\"}}]}}"
+             Expected a JSON object with \"operator\" and \"conditions\".\n\
+             Example: {{\"operator\":\"and\",\"conditions\":[{{\"property_key\":\"status\",\"condition\":\"eq\",\"select\":\"<tag-id>\"}}]}}"
         )
     })?;
 
@@ -22,13 +22,10 @@ pub(super) fn parse_filters(filters: Option<String>) -> Result<Option<SearchFilt
         return Err(anyhow!("invalid --filters: expected a JSON object"));
     }
 
-    match serde_json::from_value::<FilterExpression>(value.clone()) {
-        Ok(expr) => Ok(Some(SearchFilters::Expression(expr))),
-        Err(err) if value.get("operator").is_some() || value.get("conditions").is_some() => Err(
-            anyhow!("invalid typed filter expression for --filters: {err}"),
-        ),
-        Err(_) => Ok(Some(SearchFilters::Raw(value))),
-    }
+    let expr: FilterExpression = serde_json::from_value(value)
+        .map_err(|err| anyhow!("invalid typed filter expression for --filters: {err}"))?;
+
+    Ok(Some(expr))
 }
 
 #[cfg(test)]
@@ -43,18 +40,7 @@ mod tests {
         ))
         .unwrap();
 
-        assert!(matches!(filters, Some(SearchFilters::Expression(_))));
-    }
-
-    #[test]
-    fn parse_filters_preserves_legacy_raw_object() {
-        let filters = parse_filters(Some(
-            r#"{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}"#
-                .into(),
-        ))
-        .unwrap();
-
-        assert!(matches!(filters, Some(SearchFilters::Raw(_))));
+        assert!(filters.is_some());
     }
 
     #[test]

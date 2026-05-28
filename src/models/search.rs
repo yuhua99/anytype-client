@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use super::{DataResponse, FilterExpression, Object, SortDirection, SortProperty};
 
@@ -62,24 +61,7 @@ impl SortOptions {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum SearchFilters {
-    Expression(FilterExpression),
-    Raw(Value),
-}
-
-impl From<FilterExpression> for SearchFilters {
-    fn from(value: FilterExpression) -> Self {
-        Self::Expression(value)
-    }
-}
-
-impl From<Value> for SearchFilters {
-    fn from(value: Value) -> Self {
-        Self::Raw(value)
-    }
-}
+pub type SearchFilters = FilterExpression;
 
 pub type SearchResponse = DataResponse<Object>;
 
@@ -94,15 +76,13 @@ mod tests {
         let req = SearchRequest {
             query: String::new(),
             types: Vec::new(),
-            filters: Some(
-                FilterExpression::new(FilterOperator::And)
-                    .condition(FilterItem::Select(SelectFilterItem {
-                        property_key: "status".into(),
-                        condition: FilterCondition::Eq,
-                        select: "done".into(),
-                    }))
-                    .into(),
-            ),
+            filters: Some(FilterExpression::new(FilterOperator::And).condition(
+                FilterItem::Select(SelectFilterItem {
+                    property_key: "status".into(),
+                    condition: FilterCondition::Eq,
+                    select: "done".into(),
+                }),
+            )),
             sort: Some(SortOptions {
                 property_key: SortProperty::LastModifiedDate,
                 direction: SortDirection::Desc,
@@ -123,30 +103,6 @@ mod tests {
                     "property_key": "last_modified_date",
                     "direction": "desc"
                 }
-            })
-        );
-    }
-
-    #[test]
-    fn preserves_raw_legacy_filters() {
-        let req = SearchRequest {
-            query: String::new(),
-            types: Vec::new(),
-            filters: Some(
-                json!({
-                    "type": "and",
-                    "filters": [{"key":"type","condition":"equal","value":"task"}]
-                })
-                .into(),
-            ),
-            sort: None,
-        };
-
-        assert_eq!(
-            serde_json::to_value(req).unwrap()["filters"],
-            json!({
-                "type": "and",
-                "filters": [{"key":"type","condition":"equal","value":"task"}]
             })
         );
     }

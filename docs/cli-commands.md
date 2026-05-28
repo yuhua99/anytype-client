@@ -76,13 +76,7 @@ anyclient search --space abc123 \
   -o json
 ```
 
-Legacy raw filter example (preserved for compatibility):
-
-```bash
-anyclient search --filters '{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}' -o json
-```
-
-Typed filter expressions (with `operator`/`conditions`) are also accepted and validated strictly.
+Only the typed filter shape (with `operator` and `conditions`) is accepted and validated strictly.
 
 ## Types
 
