@@ -1,6 +1,7 @@
 mod auth;
 mod collections;
 mod files;
+mod filter_parsing;
 mod members;
 mod objects;
 mod properties;
