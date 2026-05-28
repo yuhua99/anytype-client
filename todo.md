@@ -22,7 +22,7 @@ Tests lock behavior before refactor.
 - [x] Add smoke tests for top-level CLI parse/help. See `tests/cli_smoke.rs`.
 - [x] Add request-body serialization tests for every API endpoint with JSON request bodies. See `tests/request_serialization.rs`.
 - [x] Add serde round-trip tests for core models. See `tests/model_serde.rs`.
-- [ ] Add legacy compatibility tests for raw JSON inputs.
+- [x] Add legacy compatibility tests for raw JSON inputs. See `tests/legacy_compatibility.rs`.
 - [ ] Add golden/snapshot tests for table/json/yaml output where stable.
 - [ ] Add CI command list:
   - [ ] `cargo fmt --check`
