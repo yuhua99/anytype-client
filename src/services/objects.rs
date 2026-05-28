@@ -82,6 +82,67 @@ pub async fn find_objects(
     Ok(results)
 }
 
+/// Read current tags from object, merge add/remove, return final tag IDs.
+pub(crate) async fn resolve_tag_ids(
+    client: &AnytypeClient,
+    space_id: &str,
+    object_id: &str,
+    property_name_or_key: &str,
+    add: &[String],
+    remove: &[String],
+) -> Result<Vec<String>> {
+    let prop_id = resolve_property(client, space_id, property_name_or_key).await?;
+    let all_tags = client.tags(space_id, &prop_id).await?.data;
+
+    let mut tag_ids = get_object_tag_ids(client, space_id, object_id, property_name_or_key).await?;
+
+    for name in add {
+        let tag_id = resolve_tag_from_list(&all_tags, name)?;
+        if !tag_ids.contains(&tag_id) {
+            tag_ids.push(tag_id);
+        }
+    }
+
+    for name in remove {
+        let tag_id = resolve_tag_from_list(&all_tags, name)?;
+        tag_ids.retain(|id| id != &tag_id);
+    }
+
+    Ok(tag_ids)
+}
+
+/// Get current tag IDs from an object's multi-select property.
+pub(crate) async fn get_object_tag_ids(
+    client: &AnytypeClient,
+    space_id: &str,
+    object_id: &str,
+    property_name_or_key: &str,
+) -> Result<Vec<String>> {
+    let object = client.object(space_id, object_id, None).await?.object;
+    Ok(object
+        .properties
+        .iter()
+        .find(|property| {
+            property
+                .get("key")
+                .and_then(Value::as_str)
+                .is_some_and(|key| key.eq_ignore_ascii_case(property_name_or_key))
+        })
+        .and_then(|property| property.get("multi_select"))
+        .and_then(Value::as_array)
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|value| {
+                    value
+                        .as_str()
+                        .map(String::from)
+                        .or_else(|| value.get("id").and_then(Value::as_str).map(String::from))
+                })
+                .collect()
+        })
+        .unwrap_or_default())
+}
+
 pub async fn count_objects(
     client: &AnytypeClient,
     space: String,

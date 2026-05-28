@@ -58,7 +58,7 @@ Tasks:
 - [x] Move search workflow into `services/search.rs`.
 - [ ] Move object workflows into `services/objects.rs`:
   - [x] Move `find` and `count` workflows.
-  - [ ] Move tag update workflow.
+  - [x] Move tag ID merge workflow.
   - [ ] Move bulk update workflow.
   - [ ] Move create/update request construction.
 - [x] Move property/tag resolution into domain modules:

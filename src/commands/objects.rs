@@ -1,8 +1,5 @@
 use std::path::PathBuf;
 
-use anyhow::{Result, anyhow};
-use serde_json::Value;
-
 use crate::{
     api::AnytypeClient,
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
@@ -14,6 +11,7 @@ use crate::{
         tag_resolution::resolve_tag_from_list,
     },
 };
+use anyhow::{Result, anyhow};
 
 use super::{build_icon, build_patch_icon, page_options, parse_property_values, resolve_space};
 
@@ -81,9 +79,15 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                 let prop_name = tag_property.as_deref().ok_or_else(|| {
                     anyhow!("--tag-property is required when using --tag-add or --tag-remove")
                 })?;
-                let tag_ids =
-                    resolve_tag_ids(client, &id, &object_id, prop_name, &tag_add, &tag_remove)
-                        .await?;
+                let tag_ids = objects::resolve_tag_ids(
+                    client,
+                    &id,
+                    &object_id,
+                    prop_name,
+                    &tag_add,
+                    &tag_remove,
+                )
+                .await?;
                 req.properties
                     .push(serde_json::from_value(serde_json::json!({
                         "key": prop_name,
@@ -167,7 +171,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
 
                 if need_tags {
                     let prop = prop_name.unwrap();
-                    let current = get_object_tag_ids(client, &id, oid, prop).await?;
+                    let current = objects::get_object_tag_ids(client, &id, oid, prop).await?;
                     let mut tag_ids = current.clone();
 
                     for name in &tag_add {
@@ -306,59 +310,6 @@ fn print_counts(
     Ok(())
 }
 
-/// Read current tags from object, merge add/remove, return final tag IDs.
-async fn resolve_tag_ids(
-    client: &AnytypeClient,
-    space_id: &str,
-    object_id: &str,
-    property_name_or_key: &str,
-    add: &[String],
-    remove: &[String],
-) -> Result<Vec<String>> {
-    let prop_id = resolve_property(client, space_id, property_name_or_key).await?;
-    let all_tags = client.tags(space_id, &prop_id).await?.data;
-
-    // Get current tag IDs from the object
-    let obj = client.object(space_id, object_id, None).await?.object;
-    let mut tag_ids: Vec<String> = obj
-        .properties
-        .iter()
-        .find(|p| {
-            p.get("key")
-                .and_then(Value::as_str)
-                .is_some_and(|k| k.eq_ignore_ascii_case(property_name_or_key))
-        })
-        .and_then(|p| p.get("multi_select"))
-        .and_then(Value::as_array)
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|v| {
-                    // Handle both string IDs and tag objects
-                    v.as_str()
-                        .map(String::from)
-                        .or_else(|| v.get("id").and_then(Value::as_str).map(String::from))
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-
-    // Resolve and add new tags
-    for name in add {
-        let tag_id = resolve_tag_from_list(&all_tags, name)?;
-        if !tag_ids.contains(&tag_id) {
-            tag_ids.push(tag_id);
-        }
-    }
-
-    // Resolve and remove tags
-    for name in remove {
-        let tag_id = resolve_tag_from_list(&all_tags, name)?;
-        tag_ids.retain(|id| id != &tag_id);
-    }
-
-    Ok(tag_ids)
-}
-
 /// Collect object IDs from --ids-file, --ids, or search query.
 async fn load_object_ids(
     ids_file: &Option<PathBuf>,
@@ -404,34 +355,4 @@ async fn load_object_ids(
     result.sort();
     result.dedup();
     Ok(result)
-}
-
-/// Get current tag IDs from an object's multi-select property.
-async fn get_object_tag_ids(
-    client: &AnytypeClient,
-    space_id: &str,
-    object_id: &str,
-    property_name_or_key: &str,
-) -> Result<Vec<String>> {
-    let obj = client.object(space_id, object_id, None).await?.object;
-    Ok(obj
-        .properties
-        .iter()
-        .find(|p| {
-            p.get("key")
-                .and_then(Value::as_str)
-                .is_some_and(|k| k.eq_ignore_ascii_case(property_name_or_key))
-        })
-        .and_then(|p| p.get("multi_select"))
-        .and_then(Value::as_array)
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|v| {
-                    v.as_str()
-                        .map(String::from)
-                        .or_else(|| v.get("id").and_then(Value::as_str).map(String::from))
-                })
-                .collect()
-        })
-        .unwrap_or_default())
 }
