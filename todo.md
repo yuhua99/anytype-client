@@ -234,20 +234,21 @@ Exit criteria:
 
 ## Phase 8 — Error handling policy
 
-- [ ] Decide `anyhow` boundary:
-  - [ ] OK in CLI/command layer
-  - [ ] consider typed errors in parser/service/API layers
+- [x] Decide `anyhow` boundary:
+  - [x] OK in CLI/command layer (current usage + AGENTS.md rule).
+  - [x] consider typed errors in parser/service/API layers (deferred; not justified — anyhow + targeted context suffices today; lower layers keep errors actionable via `.context()` / custom anyhow messages).
 - [ ] Add context to every fallible external operation:
-  - [ ] config load
-  - [ ] HTTP request
-  - [ ] JSON parse
-  - [ ] file IO
+  - [x] config load (with_context on read/parse/create/write in `src/config.rs`).
+  - [ ] HTTP request (client.rs has basic status/text; some decode context; can be enriched with path/method in future slice).
+  - [x] JSON parse (parsers in `commands/{filter_parsing,property_values}.rs` include arg name + examples + schema errors).
+  - [x] file IO (config save/load paths use context).
 - [ ] Remove silent catch-alls.
 - [ ] Standardize error wording.
 
 Exit criteria:
 
 - [ ] User knows what failed, where, and how to fix it.
+  (Progress: parsers/config already strong; HTTP messages functional but could include request details.)
 
 ---
 
