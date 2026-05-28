@@ -118,7 +118,7 @@ Exit criteria:
   - [x] `SearchRequest`
   - [x] `CreateObjectRequest`
   - [x] `UpdateObjectRequest`
-  - [ ] property update payloads
+  - [x] property update payloads
 - [ ] Move CLI JSON parsing into named parser modules:
   - [x] raw object parsing in `commands/property_values.rs`
   - [x] property parsing in `commands/property_values.rs`

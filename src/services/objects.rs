@@ -118,10 +118,7 @@ pub(crate) async fn update_object(
         )
         .await?;
         req.properties
-            .push(serde_json::from_value(serde_json::json!({
-                "key": prop_name,
-                "multi_select": tag_ids
-            }))?);
+            .push(PropertyLinkValue::multi_select(prop_name, tag_ids));
     }
 
     Ok(client
@@ -345,10 +342,7 @@ pub(crate) async fn update_many_objects(
 
             if tag_ids != current {
                 req.properties
-                    .push(serde_json::from_value(serde_json::json!({
-                        "key": prop,
-                        "multi_select": tag_ids
-                    }))?);
+                    .push(PropertyLinkValue::multi_select(prop, tag_ids));
             }
         }
 

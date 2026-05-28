@@ -142,6 +142,15 @@ pub enum PropertyLinkValue {
     Objects(ObjectsPropertyLinkValue),
 }
 
+impl PropertyLinkValue {
+    pub fn multi_select(key: impl Into<String>, values: Vec<String>) -> Self {
+        Self::MultiSelect(MultiSelectPropertyLinkValue {
+            key: key.into(),
+            multi_select: values,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TextPropertyLinkValue {
