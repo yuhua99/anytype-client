@@ -239,16 +239,17 @@ Exit criteria:
   - [x] consider typed errors in parser/service/API layers (deferred; not justified — anyhow + targeted context suffices today; lower layers keep errors actionable via `.context()` / custom anyhow messages).
 - [ ] Add context to every fallible external operation:
   - [x] config load (with_context on read/parse/create/write in `src/config.rs`).
-  - [ ] HTTP request (client.rs has basic status/text; some decode context; can be enriched with path/method in future slice).
+  - [x] HTTP request (enriched: send failures and non-success responses now include method+path via `op` context strings + `.with_context` on send/text/bytes in client.rs; decode chains to caller context).
   - [x] JSON parse (parsers in `commands/{filter_parsing,property_values}.rs` include arg name + examples + schema errors).
   - [x] file IO (config save/load paths use context).
-- [ ] Remove silent catch-alls.
+- [x] Remove silent catch-alls.
+  Fixed in `space_resolution.rs`: unresolved name no longer silently passes through as ID (now explicit "space not found" error with guidance).
 - [ ] Standardize error wording.
 
 Exit criteria:
 
 - [ ] User knows what failed, where, and how to fix it.
-  (Progress: parsers/config already strong; HTTP messages functional but could include request details.)
+  (Progress: parsers/config/file strong; HTTP now includes operation details; one silent fallback removed. Wording standardization and full audit remain.)
 
 ---
 

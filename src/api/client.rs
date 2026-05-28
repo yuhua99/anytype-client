@@ -39,12 +39,16 @@ impl AnytypeClient {
         path: &str,
         body: Option<&B>,
     ) -> Result<T> {
+        let op = format!("{method} {path}");
         let mut req = self.authed(method, path);
         if let Some(body) = body {
             req = req.json(body);
         }
 
-        let resp = req.send().await?;
+        let resp = req
+            .send()
+            .await
+            .with_context(|| format!("failed to send {op}"))?;
         self.decode_response(resp).await
     }
 
@@ -54,15 +58,22 @@ impl AnytypeClient {
         path: &str,
         body: Option<&B>,
     ) -> Result<()> {
+        let op = format!("{method} {path}");
         let mut req = self.authed(method, path);
         if let Some(body) = body {
             req = req.json(body);
         }
-        let resp = req.send().await?;
+        let resp = req
+            .send()
+            .await
+            .with_context(|| format!("failed to send {op}"))?;
         let status = resp.status();
-        let text = resp.text().await?;
+        let text = resp
+            .text()
+            .await
+            .with_context(|| format!("failed to read response body for {op}"))?;
         if !status.is_success() {
-            return Err(anyhow!("request failed with status {status}: {text}"));
+            return Err(anyhow!("{op} failed with status {status}: {text}"));
         }
         Ok(())
     }
@@ -76,18 +87,31 @@ impl AnytypeClient {
             .authed(Method::POST, path)
             .multipart(form)
             .send()
-            .await?;
+            .await
+            .with_context(|| format!("failed to send POST multipart to {path}"))?;
         self.decode_response(resp).await
     }
 
     pub(super) async fn request_bytes(&self, method: Method, path: &str) -> Result<Vec<u8>> {
-        let resp = self.authed(method, path).send().await?;
+        let op = format!("{method} {path}");
+        let resp = self
+            .authed(method, path)
+            .send()
+            .await
+            .with_context(|| format!("failed to send {op}"))?;
         let status = resp.status();
         if !status.is_success() {
-            let text = resp.text().await?;
-            return Err(anyhow!("request failed with status {status}: {text}"));
+            let text = resp
+                .text()
+                .await
+                .with_context(|| format!("failed to read error body for {op}"))?;
+            return Err(anyhow!("{op} failed with status {status}: {text}"));
         }
-        Ok(resp.bytes().await?.to_vec())
+        Ok(resp
+            .bytes()
+            .await
+            .with_context(|| format!("failed to read response bytes for {op}"))?
+            .to_vec())
     }
 
     pub(super) async fn request_data<T: DeserializeOwned, B: Serialize + ?Sized>(
@@ -155,9 +179,13 @@ impl AnytypeClient {
 
     async fn decode_response<T: DeserializeOwned>(&self, resp: reqwest::Response) -> Result<T> {
         let status = resp.status();
-        let text = resp.text().await?;
+        let text = resp
+            .text()
+            .await
+            .with_context(|| "failed to read response body")?;
         if !status.is_success() {
-            return Err(anyhow!("request failed with status {status}: {text}"));
+            return Err(anyhow!("request failed with status {status}: {text}"))
+                .context("see caller context for operation details");
         }
         if status == StatusCode::NO_CONTENT || text.trim().is_empty() {
             return serde_json::from_str("null").map_err(Into::into);

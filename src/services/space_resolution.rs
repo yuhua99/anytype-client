@@ -25,7 +25,10 @@ fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String>
         .collect();
 
     match matches.len() {
-        0 => Ok(id_or_name.to_string()),
+        0 => Err(anyhow!(
+            "space not found: '{}' (use exact ID or name; partial matches: none)",
+            id_or_name
+        )),
         1 => Ok(matches[0].id.clone()),
         _ => Err(anyhow!(
             "space not found: multiple spaces matched '{}': {}",
