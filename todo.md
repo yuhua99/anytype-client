@@ -116,8 +116,8 @@ Exit criteria:
 
 - [ ] Add builders or constructors for complex requests:
   - [x] `SearchRequest`
-  - [ ] `CreateObjectRequest`
-  - [ ] `UpdateObjectRequest`
+  - [x] `CreateObjectRequest`
+  - [x] `UpdateObjectRequest`
   - [ ] property update payloads
 - [ ] Move CLI JSON parsing into named parser modules:
   - [x] raw object parsing in `commands/property_values.rs`

@@ -84,14 +84,11 @@ pub(crate) async fn create_object(
     params: CreateObjectParams,
 ) -> Result<Object> {
     let space_id = resolve_space(client, &params.space).await?;
-    let req = CreateObjectRequest {
-        type_key: params.type_key,
-        name: params.name,
-        body: params.body,
-        icon: params.icon,
-        template_id: params.template_id,
-        properties: params.properties,
-    };
+    let req = CreateObjectRequest::new(params.type_key, params.name)
+        .with_body(params.body)
+        .with_icon(params.icon)
+        .with_template_id(params.template_id)
+        .with_properties(params.properties);
     Ok(client.create_object(&space_id, &req).await?.object)
 }
 
@@ -100,13 +97,12 @@ pub(crate) async fn update_object(
     params: UpdateObjectParams,
 ) -> Result<Object> {
     let space_id = resolve_space(client, &params.space).await?;
-    let mut req = UpdateObjectRequest {
-        type_key: params.type_key,
-        name: params.name,
-        markdown: params.markdown,
-        icon: params.icon,
-        properties: params.properties,
-    };
+    let mut req = UpdateObjectRequest::new()
+        .with_type_key(params.type_key)
+        .with_name(params.name)
+        .with_markdown(params.markdown)
+        .with_icon(params.icon)
+        .with_properties(params.properties);
 
     if !params.tag_add.is_empty() || !params.tag_remove.is_empty() {
         let prop_name = params.tag_property.as_deref().ok_or_else(|| {
@@ -325,13 +321,7 @@ pub(crate) async fn update_many_objects(
     let mut dry_run_changes = Vec::new();
 
     for object_id in &object_ids {
-        let mut req = UpdateObjectRequest {
-            type_key: None,
-            name: None,
-            markdown: None,
-            icon: None,
-            properties: Vec::new(),
-        };
+        let mut req = UpdateObjectRequest::new();
         let mut changes = Vec::new();
 
         if let Some(prop) = prop_name {

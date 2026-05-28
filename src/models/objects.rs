@@ -106,7 +106,40 @@ pub struct CreateObjectRequest {
     pub properties: Vec<PropertyLinkValue>,
 }
 
-#[derive(Debug, Serialize)]
+impl CreateObjectRequest {
+    pub fn new(type_key: impl Into<String>, name: impl Into<String>) -> Self {
+        Self {
+            type_key: type_key.into(),
+            name: name.into(),
+            body: String::new(),
+            icon: None,
+            template_id: None,
+            properties: Vec::new(),
+        }
+    }
+
+    pub fn with_body(mut self, body: impl Into<String>) -> Self {
+        self.body = body.into();
+        self
+    }
+
+    pub fn with_icon(mut self, icon: Option<Icon>) -> Self {
+        self.icon = icon;
+        self
+    }
+
+    pub fn with_template_id(mut self, template_id: Option<String>) -> Self {
+        self.template_id = template_id;
+        self
+    }
+
+    pub fn with_properties(mut self, properties: Vec<PropertyLinkValue>) -> Self {
+        self.properties = properties;
+        self
+    }
+}
+
+#[derive(Debug, Default, Serialize)]
 pub struct UpdateObjectRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_key: Option<String>,
@@ -118,4 +151,35 @@ pub struct UpdateObjectRequest {
     pub icon: Option<Option<Icon>>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub properties: Vec<PropertyLinkValue>,
+}
+
+impl UpdateObjectRequest {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_type_key(mut self, type_key: Option<String>) -> Self {
+        self.type_key = type_key;
+        self
+    }
+
+    pub fn with_name(mut self, name: Option<String>) -> Self {
+        self.name = name;
+        self
+    }
+
+    pub fn with_markdown(mut self, markdown: Option<String>) -> Self {
+        self.markdown = markdown;
+        self
+    }
+
+    pub fn with_icon(mut self, icon: Option<Option<Icon>>) -> Self {
+        self.icon = icon;
+        self
+    }
+
+    pub fn with_properties(mut self, properties: Vec<PropertyLinkValue>) -> Self {
+        self.properties = properties;
+        self
+    }
 }
