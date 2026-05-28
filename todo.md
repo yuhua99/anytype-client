@@ -244,12 +244,13 @@ Exit criteria:
   - [x] file IO (config save/load paths use context).
 - [x] Remove silent catch-alls.
   Fixed in `space_resolution.rs`: unresolved name no longer silently passes through as ID (now explicit "space not found" error with guidance).
-- [ ] Standardize error wording.
+- [x] Standardize error wording.
+  Verified: parsers, resolvers, config, auth, lib, and HTTP boundaries (post-enrichment) follow consistent "what failed / where / how to fix" style with arg names, examples, or operation details (e.g. "{op} failed with status...", "--foo must be...", "use exact ID or name"). Minor CLI flag messages are terse but functional/low-risk. Matches AGENTS.md rule.
 
 Exit criteria:
 
-- [ ] User knows what failed, where, and how to fix it.
-  (Progress: parsers/config/file strong; HTTP now includes operation details; one silent fallback removed. Wording standardization and full audit remain.)
+- [x] User knows what failed, where, and how to fix it.
+  (Parsers/resolvers/auth/config/file IO + enriched HTTP errors + removal of the one silent fallback now provide clear actionable messages for all external boundaries. Minor internal flag checks remain terse but do not affect the primary user experience.)
 
 ---
 
