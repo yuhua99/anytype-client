@@ -61,9 +61,9 @@ Tasks:
   - [ ] Move tag update workflow.
   - [ ] Move bulk update workflow.
   - [ ] Move create/update request construction.
-- [ ] Move property/tag resolution into domain modules:
-  - [ ] `services/property_resolution.rs`
-  - [ ] `services/tag_resolution.rs`
+- [x] Move property/tag resolution into domain modules:
+  - [x] `services/property_resolution.rs`
+  - [x] `services/tag_resolution.rs`
 - [ ] Keep `commands/*` limited to:
   - [ ] args in
   - [ ] call service/api

@@ -5,7 +5,8 @@ use serde_json::Value;
 
 use crate::{
     api::AnytypeClient,
-    models::{Object, SearchRequest, Space, Tag},
+    models::{Object, SearchRequest, Space},
+    services::{property_resolution::resolve_property, tag_resolution::resolve_tag_from_list},
 };
 
 pub struct FindObjectsParams {
@@ -249,93 +250,6 @@ fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String>
             matches
                 .iter()
                 .map(|space| format!("{} ({})", space.name, space.id))
-                .collect::<Vec<_>>()
-                .join(", ")
-        )),
-    }
-}
-
-async fn resolve_property(
-    client: &AnytypeClient,
-    space_id: &str,
-    name_or_key: &str,
-) -> Result<String> {
-    let properties = client.properties(space_id).await?.data;
-    if let Some(property) = properties
-        .iter()
-        .find(|property| property.id == name_or_key)
-    {
-        return Ok(property.id.clone());
-    }
-    if let Some(property) = properties
-        .iter()
-        .find(|property| property.key.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(property.id.clone());
-    }
-    if let Some(property) = properties
-        .iter()
-        .find(|property| property.name.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(property.id.clone());
-    }
-    let needle = name_or_key.to_lowercase();
-    let matches: Vec<_> = properties
-        .iter()
-        .filter(|property| {
-            property.name.to_lowercase().contains(&needle)
-                || property.key.to_lowercase().contains(&needle)
-        })
-        .collect();
-    match matches.len() {
-        0 => Err(anyhow!(
-            "property not found: '{name_or_key}' matched no property name or key"
-        )),
-        1 => Ok(matches[0].id.clone()),
-        _ => Err(anyhow!(
-            "property ambiguous: '{name_or_key}' matched multiple: {}",
-            matches
-                .iter()
-                .map(|property| format!("{} ({})", property.name, property.id))
-                .collect::<Vec<_>>()
-                .join(", ")
-        )),
-    }
-}
-
-fn resolve_tag_from_list(tags: &[Tag], name_or_key: &str) -> Result<String> {
-    if let Some(tag) = tags.iter().find(|tag| tag.id == name_or_key) {
-        return Ok(tag.id.clone());
-    }
-    if let Some(tag) = tags
-        .iter()
-        .find(|tag| tag.key.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(tag.id.clone());
-    }
-    if let Some(tag) = tags
-        .iter()
-        .find(|tag| tag.name.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(tag.id.clone());
-    }
-    let needle = name_or_key.to_lowercase();
-    let matches: Vec<_> = tags
-        .iter()
-        .filter(|tag| {
-            tag.name.to_lowercase().contains(&needle) || tag.key.to_lowercase().contains(&needle)
-        })
-        .collect();
-    match matches.len() {
-        0 => Err(anyhow!(
-            "tag not found: '{name_or_key}' matched no tag name or key"
-        )),
-        1 => Ok(matches[0].id.clone()),
-        _ => Err(anyhow!(
-            "tag ambiguous: '{name_or_key}' matched multiple: {}",
-            matches
-                .iter()
-                .map(|tag| format!("{} ({})", tag.name, tag.id))
                 .collect::<Vec<_>>()
                 .join(", ")
         )),

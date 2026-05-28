@@ -8,13 +8,14 @@ use crate::{
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
     models::{CreateObjectRequest, SearchRequest, UpdateObjectRequest},
     output::{print_data, print_one},
-    services::objects::{self, FindObjectsParams, ObjectCountResult},
+    services::{
+        objects::{self, FindObjectsParams, ObjectCountResult},
+        property_resolution::resolve_property,
+        tag_resolution::resolve_tag_from_list,
+    },
 };
 
-use super::{
-    build_icon, build_patch_icon, page_options, parse_property_values, resolve_property,
-    resolve_space,
-};
+use super::{build_icon, build_patch_icon, page_options, parse_property_values, resolve_space};
 
 pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
@@ -356,45 +357,6 @@ async fn resolve_tag_ids(
     }
 
     Ok(tag_ids)
-}
-
-fn resolve_tag_from_list(tags: &[crate::models::Tag], name_or_key: &str) -> Result<String> {
-    if let Some(t) = tags.iter().find(|t| t.id == name_or_key) {
-        return Ok(t.id.clone());
-    }
-    if let Some(t) = tags
-        .iter()
-        .find(|t| t.key.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(t.id.clone());
-    }
-    if let Some(t) = tags
-        .iter()
-        .find(|t| t.name.eq_ignore_ascii_case(name_or_key))
-    {
-        return Ok(t.id.clone());
-    }
-    let needle = name_or_key.to_lowercase();
-    let matches: Vec<_> = tags
-        .iter()
-        .filter(|t| {
-            t.name.to_lowercase().contains(&needle) || t.key.to_lowercase().contains(&needle)
-        })
-        .collect();
-    match matches.len() {
-        0 => Err(anyhow!(
-            "tag not found: '{name_or_key}' matched no tag name or key"
-        )),
-        1 => Ok(matches[0].id.clone()),
-        _ => Err(anyhow!(
-            "tag ambiguous: '{name_or_key}' matched multiple: {}",
-            matches
-                .iter()
-                .map(|t| format!("{} ({})", t.name, t.id))
-                .collect::<Vec<_>>()
-                .join(", ")
-        )),
-    }
 }
 
 /// Collect object IDs from --ids-file, --ids, or search query.

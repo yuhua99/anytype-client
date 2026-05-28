@@ -4,4 +4,6 @@
 //! They should not render output or perform CLI parsing.
 
 pub mod objects;
+pub(crate) mod property_resolution;
 pub mod search;
+pub(crate) mod tag_resolution;
