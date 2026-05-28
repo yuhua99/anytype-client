@@ -10,7 +10,7 @@ impl AnytypeClient {
     pub async fn create_challenge(&self, app_name: &str) -> Result<CreateChallengeResponse> {
         self.request(
             Method::POST,
-            "/auth/challenges",
+            super::auth_challenges_path(),
             Some(&CreateChallengeRequest {
                 app_name: app_name.to_string(),
             }),
@@ -25,7 +25,7 @@ impl AnytypeClient {
     ) -> Result<CreateApiKeyResponse> {
         self.request(
             Method::POST,
-            "/auth/api_keys",
+            super::auth_api_keys_path(),
             Some(&CreateApiKeyRequest {
                 challenge_id: challenge_id.to_string(),
                 code: code.to_string(),

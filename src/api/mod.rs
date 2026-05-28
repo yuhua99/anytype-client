@@ -200,5 +200,11 @@ mod tests {
         // Members domain (broadened centralization)
         assert_eq!(space_members_path("s1"), "/spaces/s1/members");
         assert_eq!(space_member_path("s1", "m1"), "/spaces/s1/members/m1");
+        // Spaces domain (broadened centralization)
+        assert_eq!(spaces_path(), "/spaces");
+        assert_eq!(space_path("s1"), "/spaces/s1");
+        // Auth domain (broadened centralization)
+        assert_eq!(auth_challenges_path(), "/auth/challenges");
+        assert_eq!(auth_api_keys_path(), "/auth/api_keys");
     }
 }

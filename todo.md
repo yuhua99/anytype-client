@@ -143,6 +143,7 @@ Exit criteria:
   - [x] Broadened to files domain (upload, download with width, delete with skip_bin paths) using private helpers in `src/api/mod.rs`.
   - [x] Broadened to lists domain (views, view objects, add/remove objects paths) using private helpers in `src/api/mod.rs`.
   - [x] Broadened to members domain (list/get paths) using private helpers in `src/api/mod.rs`.
+  - [x] Broadened to spaces (collection/detail) and auth (challenges/api-keys) paths using private helpers in `src/api/mod.rs`.
 - [x] Ensure all API methods accept typed request structs and return typed responses.
 - [ ] Add request tests using mocked transport or test client.
   - [x] Initial unit tests added for the centralized object/search path helpers (module tests in `src/api/mod.rs` exercising the recent narrow centralization).
