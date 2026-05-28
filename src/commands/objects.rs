@@ -1,10 +1,10 @@
 use crate::{
     api::AnytypeClient,
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
-    models::{CreateObjectRequest, UpdateObjectRequest},
     output::{print_data, print_one},
     services::objects::{
-        self, BulkUpdateParams, BulkUpdateResult, FindObjectsParams, ObjectCountResult,
+        self, BulkUpdateParams, BulkUpdateResult, CreateObjectParams, FindObjectsParams,
+        ObjectCountResult, UpdateObjectParams,
     },
 };
 use anyhow::{Result, anyhow};
@@ -39,18 +39,22 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             icon,
             template,
             properties,
-        } => {
-            let id = resolve_space(client, &space).await?;
-            let req = CreateObjectRequest {
-                type_key: r#type,
-                name,
-                body,
-                icon: build_icon(icon)?,
-                template_id: template,
-                properties: parse_property_values(properties)?,
-            };
-            print_one(client.create_object(&id, &req).await?.object, output)
-        }
+        } => print_one(
+            objects::create_object(
+                client,
+                CreateObjectParams {
+                    space,
+                    type_key: r#type,
+                    name,
+                    body,
+                    icon: build_icon(icon)?,
+                    template_id: template,
+                    properties: parse_property_values(properties)?,
+                },
+            )
+            .await?,
+            output,
+        ),
         ObjectsCommand::Update {
             space,
             object_id,
@@ -62,39 +66,25 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             tag_property,
             tag_add,
             tag_remove,
-        } => {
-            let id = resolve_space(client, &space).await?;
-            let mut req = UpdateObjectRequest {
-                type_key: r#type,
-                name,
-                markdown,
-                icon: build_patch_icon(icon)?,
-                properties: parse_property_values(properties)?,
-            };
-            if !tag_add.is_empty() || !tag_remove.is_empty() {
-                let prop_name = tag_property.as_deref().ok_or_else(|| {
-                    anyhow!("--tag-property is required when using --tag-add or --tag-remove")
-                })?;
-                let tag_ids = objects::resolve_tag_ids(
-                    client,
-                    &id,
-                    &object_id,
-                    prop_name,
-                    &tag_add,
-                    &tag_remove,
-                )
-                .await?;
-                req.properties
-                    .push(serde_json::from_value(serde_json::json!({
-                        "key": prop_name,
-                        "multi_select": tag_ids
-                    }))?);
-            }
-            print_one(
-                client.update_object(&id, &object_id, &req).await?.object,
-                output,
+        } => print_one(
+            objects::update_object(
+                client,
+                UpdateObjectParams {
+                    space,
+                    object_id,
+                    type_key: r#type,
+                    name,
+                    markdown,
+                    icon: build_patch_icon(icon)?,
+                    properties: parse_property_values(properties)?,
+                    tag_property,
+                    tag_add,
+                    tag_remove,
+                },
             )
-        }
+            .await?,
+            output,
+        ),
         ObjectsCommand::Delete { space, object_id } => {
             let id = resolve_space(client, &space).await?;
             print_one(client.delete_object(&id, &object_id).await?.object, output)

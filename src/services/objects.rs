@@ -5,7 +5,10 @@ use serde_json::Value;
 
 use crate::{
     api::AnytypeClient,
-    models::{Object, SearchRequest, Space, UpdateObjectRequest},
+    models::{
+        CreateObjectRequest, Icon, Object, PropertyLinkValue, SearchRequest, Space,
+        UpdateObjectRequest,
+    },
     services::{property_resolution::resolve_property, tag_resolution::resolve_tag_from_list},
 };
 
@@ -25,6 +28,29 @@ pub enum ObjectCountResult {
         counts: BTreeMap<String, usize>,
         total: usize,
     },
+}
+
+pub(crate) struct CreateObjectParams {
+    pub space: String,
+    pub type_key: String,
+    pub name: String,
+    pub body: String,
+    pub icon: Option<Icon>,
+    pub template_id: Option<String>,
+    pub properties: Vec<PropertyLinkValue>,
+}
+
+pub(crate) struct UpdateObjectParams {
+    pub space: String,
+    pub object_id: String,
+    pub type_key: Option<String>,
+    pub name: Option<String>,
+    pub markdown: Option<String>,
+    pub icon: Option<Option<Icon>>,
+    pub properties: Vec<PropertyLinkValue>,
+    pub tag_property: Option<String>,
+    pub tag_add: Vec<String>,
+    pub tag_remove: Vec<String>,
 }
 
 pub(crate) struct BulkUpdateParams {
@@ -53,6 +79,61 @@ pub(crate) enum BulkUpdateResult {
 pub(crate) struct BulkUpdateChange {
     pub name: String,
     pub changes: Vec<String>,
+}
+
+pub(crate) async fn create_object(
+    client: &AnytypeClient,
+    params: CreateObjectParams,
+) -> Result<Object> {
+    let space_id = resolve_space(client, &params.space).await?;
+    let req = CreateObjectRequest {
+        type_key: params.type_key,
+        name: params.name,
+        body: params.body,
+        icon: params.icon,
+        template_id: params.template_id,
+        properties: params.properties,
+    };
+    Ok(client.create_object(&space_id, &req).await?.object)
+}
+
+pub(crate) async fn update_object(
+    client: &AnytypeClient,
+    params: UpdateObjectParams,
+) -> Result<Object> {
+    let space_id = resolve_space(client, &params.space).await?;
+    let mut req = UpdateObjectRequest {
+        type_key: params.type_key,
+        name: params.name,
+        markdown: params.markdown,
+        icon: params.icon,
+        properties: params.properties,
+    };
+
+    if !params.tag_add.is_empty() || !params.tag_remove.is_empty() {
+        let prop_name = params.tag_property.as_deref().ok_or_else(|| {
+            anyhow!("--tag-property is required when using --tag-add or --tag-remove")
+        })?;
+        let tag_ids = resolve_tag_ids(
+            client,
+            &space_id,
+            &params.object_id,
+            prop_name,
+            &params.tag_add,
+            &params.tag_remove,
+        )
+        .await?;
+        req.properties
+            .push(serde_json::from_value(serde_json::json!({
+                "key": prop_name,
+                "multi_select": tag_ids
+            }))?);
+    }
+
+    Ok(client
+        .update_object(&space_id, &params.object_id, &req)
+        .await?
+        .object)
 }
 
 pub async fn find_objects(
