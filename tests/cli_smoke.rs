@@ -92,3 +92,128 @@ fn rejects_invalid_search_direction() {
 
     assert!(err.contains("invalid value 'sideways'"));
 }
+
+#[test]
+fn parses_search_with_typed_filters() {
+    let cli = Cli::try_parse_from([
+        "anyclient",
+        "search",
+        "--query",
+        "task",
+        "--space",
+        "abc123",
+        "--filters",
+        r#"{"operator":"and","conditions":[{"property_key":"status","condition":"eq","select":"done"}]}"#,
+        "--output",
+        "json",
+    ])
+    .unwrap();
+
+    match cli.command {
+        Command::Search(args) => {
+            assert_eq!(args.query, "task");
+            assert_eq!(args.space.as_deref(), Some("abc123"));
+            assert!(args.filters.is_some());
+        }
+        _ => panic!("expected search command"),
+    }
+}
+
+#[test]
+fn parses_search_with_legacy_raw_filters() {
+    let cli = Cli::try_parse_from([
+        "anyclient",
+        "search",
+        "--filters",
+        r#"{"type":"and","filters":[{"key":"type","condition":"equal","value":"task"}]}"#,
+    ])
+    .unwrap();
+
+    match cli.command {
+        Command::Search(args) => {
+            assert!(args.filters.is_some());
+        }
+        _ => panic!("expected search command"),
+    }
+}
+
+#[test]
+fn parses_objects_create_with_properties() {
+    let cli = Cli::try_parse_from([
+        "anyclient",
+        "objects",
+        "create",
+        "space-id",
+        "--name",
+        "My Task",
+        "--type",
+        "task",
+        "--property",
+        r#"{"key":"status","text":"done"}"#,
+        "--property",
+        r#"{"key":"tags","multi_select":["tag1","tag2"]}"#,
+    ])
+    .unwrap();
+
+    match cli.command {
+        Command::Objects(args) => match args.command {
+            ObjectsCommand::Create {
+                space,
+                name,
+                r#type,
+                properties,
+                ..
+            } => {
+                assert_eq!(space, "space-id");
+                assert_eq!(name, "My Task");
+                assert_eq!(r#type, "task");
+                assert_eq!(properties.properties.len(), 2);
+            }
+            _ => panic!("expected create command"),
+        },
+        _ => panic!("expected objects command"),
+    }
+}
+
+#[test]
+fn parses_objects_update_with_properties_and_tags() {
+    let cli = Cli::try_parse_from([
+        "anyclient",
+        "objects",
+        "update",
+        "space-id",
+        "obj-id",
+        "--name",
+        "Updated",
+        "--tag-property",
+        "status",
+        "--tag-add",
+        "done",
+        "--property",
+        r#"{"key":"title","text":"foo"}"#,
+    ])
+    .unwrap();
+
+    match cli.command {
+        Command::Objects(args) => match args.command {
+            ObjectsCommand::Update {
+                space,
+                object_id,
+                name,
+                tag_property,
+                tag_add,
+                properties,
+                ..
+            } => {
+                assert_eq!(space, "space-id");
+                assert_eq!(object_id, "obj-id");
+                assert_eq!(name.as_deref(), Some("Updated"));
+                assert_eq!(tag_property.as_deref(), Some("status"));
+                assert_eq!(tag_add, ["done"]);
+                assert_eq!(properties.properties.len(), 1);
+            }
+            _ => panic!("expected update command"),
+        },
+        _ => panic!("expected objects command"),
+    }
+}

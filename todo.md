@@ -214,11 +214,18 @@ Exit criteria:
   - [ ] tags
   - [ ] files
 - [ ] Add smoke test script for examples where possible.
-- [ ] Ensure every documented command still parses.
+- [x] Ensure every documented command still parses.
+  Added parse tests in `tests/cli_smoke.rs` exercising documented examples from `docs/cli-commands.md` and `skills/anyclient/SKILL.md`:
+  - search with typed filters (operator/conditions)
+  - search with legacy raw filters
+  - objects create with repeatable --property JSON (incl multi_select)
+  - objects update with --property + --tag-property/--tag-add
+  (covers search filters typed/legacy, object properties, tags; no network required; validates clap surface).
 
 Exit criteria:
 
 - [ ] Docs cannot silently rot.
+  (CLI parse coverage improved; full docs examples + smoke script still open.)
 
 ---
 
