@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
-use crate::models::{IconColor, PropertyFormat};
+use crate::models::{IconColor, PropertyFormat, SortDirection, SortProperty};
 
 #[derive(Parser)]
 #[command(
@@ -283,10 +283,10 @@ pub struct SearchArgs {
     pub query: String,
     #[arg(long, value_delimiter = ',')]
     pub types: Vec<String>,
-    #[arg(long, value_parser = ["created_date", "last_modified_date", "last_opened_date", "name"])]
-    pub sort: Option<String>,
-    #[arg(long, default_value = "desc", value_parser = ["asc", "desc"])]
-    pub direction: String,
+    #[arg(long, value_enum)]
+    pub sort: Option<SortProperty>,
+    #[arg(long, value_enum, default_value = "desc")]
+    pub direction: SortDirection,
     #[arg(long)]
     pub filters: Option<String>,
     #[arg(long)]

@@ -1,6 +1,7 @@
 mod auth;
 mod common;
 mod files;
+mod filters;
 mod lists;
 mod members;
 mod objects;
@@ -12,6 +13,7 @@ mod types;
 pub use auth::*;
 pub use common::*;
 pub use files::*;
+pub use filters::*;
 pub use lists::*;
 pub use members::*;
 pub use objects::*;
