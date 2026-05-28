@@ -15,6 +15,11 @@ where
 pub type ViewListResponse = DataResponse<ListView>;
 pub type ObjectListResponse = DataResponse<Object>;
 
+#[derive(Debug, Serialize)]
+pub struct AddToListRequest<'a> {
+    pub objects: &'a [String],
+}
+
 #[derive(Debug, Serialize, Deserialize, Tabled)]
 pub struct ListView {
     pub id: String,

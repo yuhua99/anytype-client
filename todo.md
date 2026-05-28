@@ -20,7 +20,7 @@ Tests lock behavior before refactor.
 
 - [x] Record current supported CLI commands and examples. See `docs/cli-commands.md`.
 - [x] Add smoke tests for top-level CLI parse/help. See `tests/cli_smoke.rs`.
-- [ ] Add request-body serialization tests for every API endpoint.
+- [x] Add request-body serialization tests for every API endpoint with JSON request bodies. See `tests/request_serialization.rs`.
 - [ ] Add serde round-trip tests for core models.
 - [ ] Add legacy compatibility tests for raw JSON inputs.
 - [ ] Add golden/snapshot tests for table/json/yaml output where stable.

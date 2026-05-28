@@ -2,7 +2,7 @@ use anyhow::Result;
 use reqwest::Method;
 
 use super::{AnytypeClient, PageOptions};
-use crate::models::{ObjectListResponse, ViewListResponse};
+use crate::models::{AddToListRequest, ObjectListResponse, ViewListResponse};
 
 impl AnytypeClient {
     pub async fn views(&self, space_id: &str, list_id: &str) -> Result<ViewListResponse> {
@@ -59,7 +59,7 @@ impl AnytypeClient {
         self.request_empty(
             Method::POST,
             &format!("/spaces/{space_id}/lists/{list_id}/objects"),
-            Some(&serde_json::json!({ "objects": objects })),
+            Some(&AddToListRequest { objects }),
         )
         .await
     }
