@@ -14,7 +14,7 @@ pub use client::{AnytypeClient, PageOptions};
 
 // Centralized API endpoint path builders.
 // Owned by the api layer; used only by endpoint method implementations.
-// Grouped by domain for maintainability; currently covers objects, search, types, properties, tags, files, and lists.
+// Grouped by domain for maintainability; currently covers objects, search, types, properties, tags, files, lists, members, spaces, and auth.
 
 fn global_search_path() -> &'static str {
     "/search"
@@ -105,6 +105,33 @@ fn space_list_object_path(space_id: &str, list_id: &str, object_id: &str) -> Str
     format!("/spaces/{space_id}/lists/{list_id}/objects/{object_id}")
 }
 
+// Members domain paths
+fn space_members_path(space_id: &str) -> String {
+    format!("/spaces/{space_id}/members")
+}
+
+fn space_member_path(space_id: &str, member_id: &str) -> String {
+    format!("/spaces/{space_id}/members/{member_id}")
+}
+
+// Spaces domain paths
+fn spaces_path() -> &'static str {
+    "/spaces"
+}
+
+fn space_path(space_id: &str) -> String {
+    format!("/spaces/{space_id}")
+}
+
+// Auth domain paths
+fn auth_challenges_path() -> &'static str {
+    "/auth/challenges"
+}
+
+fn auth_api_keys_path() -> &'static str {
+    "/auth/api_keys"
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +197,8 @@ mod tests {
             space_list_object_path("s1", "l1", "o1"),
             "/spaces/s1/lists/l1/objects/o1"
         );
+        // Members domain (broadened centralization)
+        assert_eq!(space_members_path("s1"), "/spaces/s1/members");
+        assert_eq!(space_member_path("s1", "m1"), "/spaces/s1/members/m1");
     }
 }

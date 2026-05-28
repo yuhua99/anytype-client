@@ -16,7 +16,7 @@ impl AnytypeClient {
     ) -> Result<MemberListResponse> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/members"),
+            &super::space_members_path(space_id),
             Option::<&()>::None,
             page,
         )
@@ -26,7 +26,7 @@ impl AnytypeClient {
     pub async fn member(&self, space_id: &str, member_id: &str) -> Result<MemberResponse> {
         self.request(
             Method::GET,
-            &format!("/spaces/{space_id}/members/{member_id}"),
+            &super::space_member_path(space_id, member_id),
             Option::<&()>::None,
         )
         .await
