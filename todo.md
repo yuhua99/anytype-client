@@ -182,7 +182,8 @@ Exit criteria:
   Verified: zero `println!`/`print_*`/`output::` in `src/{services,api}/**`; confined to thin `src/commands/*` orchestration.
 - [x] Add output tests for representative objects.
   Added in `tests/output_rendering.rs`: exact-string json for `Space` + table for `Property` using real model instances (minimal construction, stable output).
-- [ ] Standardize success messages.
+- [x] Standardize success messages.
+  Introduced `print_success`/`eprint_status` helpers in `src/output.rs` (thin, avoid over-engineering); converted clear non-data success/status messages (auth flows, collection add/remove, file download/delete, type delete, bulk update summaries). Raw data paths (ids-only/names-only, markdown export, count/grouped) and interactive prompts left as direct `println!` per scope. Preserves stdout/stderr semantics.
 
 Exit criteria:
 

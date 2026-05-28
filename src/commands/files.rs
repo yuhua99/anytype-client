@@ -5,7 +5,7 @@ use anyhow::{Context, Result, anyhow};
 use crate::{
     api::AnytypeClient,
     cli::{FilesArgs, FilesCommand, OutputFormat},
-    output::print_one,
+    output::{print_one, print_success},
 };
 
 use super::resolve_space;
@@ -32,7 +32,11 @@ pub async fn run(client: &AnytypeClient, args: FilesArgs, output: &OutputFormat)
             let id = resolve_space(client, &space).await?;
             let bytes = client.download_file(&id, &file_id, width).await?;
             write_file(&output, &bytes, force)?;
-            println!("Downloaded {} bytes to {}", bytes.len(), output.display());
+            print_success(format!(
+                "Downloaded {} bytes to {}",
+                bytes.len(),
+                output.display()
+            ));
             Ok(())
         }
         FilesCommand::Delete {
@@ -42,7 +46,7 @@ pub async fn run(client: &AnytypeClient, args: FilesArgs, output: &OutputFormat)
         } => {
             let id = resolve_space(client, &space).await?;
             client.delete_file(&id, &file_id, skip_bin).await?;
-            println!("Deleted file {file_id}");
+            print_success(format!("Deleted file {file_id}"));
             Ok(())
         }
     }

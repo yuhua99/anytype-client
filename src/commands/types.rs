@@ -4,7 +4,7 @@ use crate::{
     api::AnytypeClient,
     cli::{OutputFormat, TypesArgs, TypesCommand},
     models::{CreateTypeRequest, UpdateTypeRequest},
-    output::{print_data, print_one},
+    output::{print_data, print_one, print_success},
 };
 
 use super::{
@@ -74,7 +74,7 @@ pub async fn run(client: &AnytypeClient, args: TypesArgs, output: &OutputFormat)
             match client.delete_type(&id, &type_id).await?.r#type {
                 Some(r#type) => print_one(r#type, output),
                 None => {
-                    println!("Type deleted");
+                    print_success("Type deleted");
                     Ok(())
                 }
             }

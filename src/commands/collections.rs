@@ -3,7 +3,7 @@ use anyhow::Result;
 use crate::{
     api::AnytypeClient,
     cli::{CollectionsArgs, CollectionsCommand, OutputFormat},
-    output::print_data,
+    output::{print_data, print_success},
 };
 
 use super::{page_options, resolve_space};
@@ -50,11 +50,11 @@ pub async fn run(
         } => {
             let id = resolve_space(client, &space).await?;
             client.add_to_list(&id, &collection_id, &object_ids).await?;
-            println!(
+            print_success(format!(
                 "Successfully added {} object(s) to collection {}",
                 object_ids.len(),
                 collection_id
-            );
+            ));
             Ok(())
         }
         CollectionsCommand::Remove {
@@ -66,10 +66,10 @@ pub async fn run(
             client
                 .remove_from_list(&id, &collection_id, &object_id)
                 .await?;
-            println!(
+            print_success(format!(
                 "Successfully removed object {} from collection {}",
                 object_id, collection_id
-            );
+            ));
             Ok(())
         }
     }

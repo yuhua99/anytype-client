@@ -7,6 +7,7 @@ use crate::{
     api::AnytypeClient,
     cli::{AuthArgs, AuthCommand},
     config::Config,
+    output::print_success,
 };
 
 pub async fn auth_command(
@@ -39,7 +40,7 @@ async fn desktop_auth(
     force: bool,
 ) -> Result<()> {
     if config.api_key.is_some() && !force {
-        println!("Already authenticated. Use --force to re-authenticate.");
+        print_success("Already authenticated. Use --force to re-authenticate.");
         return Ok(());
     }
 
@@ -47,7 +48,7 @@ async fn desktop_auth(
     let client = AnytypeClient::new(base_url.clone(), None)?;
     let challenge = client.create_challenge(&app_name).await?;
 
-    println!("Desktop auth challenge created. Check Anytype desktop app.");
+    print_success("Desktop auth challenge created. Check Anytype desktop app.");
     println!("Challenge ID: {}", challenge.challenge_id);
     println!("Enter verification code:");
 
@@ -60,10 +61,10 @@ async fn desktop_auth(
     config.base_url = Some(base_url);
     config.api_key = Some(token.api_key);
     config.save(&config_path)?;
-    println!(
+    print_success(format!(
         "Desktop authentication successful. Saved credentials to {}",
         config_path.display()
-    );
+    ));
     Ok(())
 }
 
@@ -77,7 +78,7 @@ fn headless_auth(
 ) -> Result<()> {
     let new_key = api_key.or(cli_api_key);
     if config.api_key.is_some() && !force && new_key.is_none() {
-        println!("Already authenticated. Use --force to overwrite.");
+        print_success("Already authenticated. Use --force to overwrite.");
         return Ok(());
     }
 
@@ -88,6 +89,9 @@ fn headless_auth(
     config.base_url = Some(cli_base_url.unwrap_or_else(|| DEFAULT_HEADLESS_BASE_URL.to_string()));
     config.api_key = Some(key);
     config.save(&config_path)?;
-    println!("Headless API key saved to {}", config_path.display());
+    print_success(format!(
+        "Headless API key saved to {}",
+        config_path.display()
+    ));
     Ok(())
 }

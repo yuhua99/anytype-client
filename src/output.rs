@@ -47,3 +47,16 @@ where
     println!("{}", render_one(data, output)?);
     Ok(())
 }
+
+/// Print a non-data success/status message to stdout.
+/// Commands use for post-operation feedback (e.g. "Type deleted", "Downloaded...").
+/// This keeps simple messages out of data paths while output layer owns all printing.
+pub fn print_success(msg: impl std::fmt::Display) {
+    println!("{msg}");
+}
+
+/// Print an operation status or result summary to stderr.
+/// Used for bulk update summaries, dry-runs, etc. to separate from data output.
+pub fn eprint_status(msg: impl std::fmt::Display) {
+    eprintln!("{msg}");
+}
