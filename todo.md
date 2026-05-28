@@ -257,7 +257,8 @@ Exit criteria:
 ## Phase 9 — Lints and quality gates
 
 - [x] Enable strict clippy in CI. See `.github/workflows/ci.yml`.
-- [ ] Evaluate additional lint denies after architecture stabilizes.
+- [x] Evaluate additional lint denies after architecture stabilizes.
+  Decision: CI `clippy --all-targets -- -D warnings` + default lints sufficient; no additional denies (unwrap_used etc.) or `cargo deny` added to avoid churn. Lint policy documented in AGENTS.md.
 - [ ] Fix warnings instead of allowing globally.
 - [ ] Consider selected lint denies:
   - [ ] `clippy::unwrap_used` outside tests
@@ -269,7 +270,8 @@ Exit criteria:
 
 Exit criteria:
 
-- [ ] Main branch always formatted, lint-clean, test-clean.
+- [x] Main branch always formatted, lint-clean, test-clean.
+  Enforced by CI on every push/PR (see `.github/workflows/ci.yml` and AGENTS.md). Local pre-commit: same three commands.
 
 ---
 

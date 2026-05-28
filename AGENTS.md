@@ -113,6 +113,8 @@ cargo clippy --all-targets -- -D warnings
 cargo test
 ```
 
+Lint policy: default Rust + Clippy lints enforced via CI (`-D warnings`). No crate-level `#![deny(...)]` or pedantic lints enabled (avoids churn on small CLI). Additional denies (e.g. `unwrap_used` outside tests) deferred unless justified by clear need. All code changes must pass gates.
+
 ## OpenAPI and generated artifact rules
 
 - Do not commit unreferenced live API snapshots in repo root.
