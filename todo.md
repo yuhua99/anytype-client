@@ -23,7 +23,7 @@ Tests lock behavior before refactor.
 - [x] Add request-body serialization tests for every API endpoint with JSON request bodies. See `tests/request_serialization.rs`.
 - [x] Add serde round-trip tests for core models. See `tests/model_serde.rs`.
 - [x] Add legacy compatibility tests for raw JSON inputs. See `tests/legacy_compatibility.rs`.
-- [ ] Add golden/snapshot tests for table/json/yaml output where stable.
+- [x] Add golden/snapshot tests for table/json/yaml output where stable. See `tests/output_rendering.rs`.
 - [ ] Add CI command list:
   - [ ] `cargo fmt --check`
   - [ ] `cargo clippy --all-targets -- -D warnings`
