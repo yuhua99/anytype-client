@@ -7,7 +7,10 @@ use crate::{
     output::{print_data, print_one},
 };
 
-use super::{build_icon, build_patch_icon, page_options, parse_property_links, resolve_space};
+use super::{
+    build_icon, build_patch_icon, page_options, property_values::parse_property_links,
+    resolve_space,
+};
 
 pub async fn run(client: &AnytypeClient, args: TypesArgs, output: &OutputFormat) -> Result<()> {
     match args.command {

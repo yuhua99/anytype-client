@@ -7,7 +7,7 @@ use crate::{
     output::{print_data, print_one},
 };
 
-use super::{page_options, parse_json_items, resolve_space};
+use super::{page_options, property_values::parse_json_items, resolve_space};
 
 pub async fn run(
     client: &AnytypeClient,

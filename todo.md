@@ -120,8 +120,8 @@ Exit criteria:
   - [ ] `UpdateObjectRequest`
   - [ ] property update payloads
 - [ ] Move CLI JSON parsing into named parser modules:
-  - [ ] raw object parsing in domain-specific parser module
-  - [ ] property parsing in `services/property_values.rs`
+  - [x] raw object parsing in `commands/property_values.rs`
+  - [x] property parsing in `commands/property_values.rs`
   - [x] filter parsing in `commands/filter_parsing.rs`
 - [ ] Return actionable errors with arg name and example.
 - [ ] Avoid silent fallback except explicitly documented compatibility paths.

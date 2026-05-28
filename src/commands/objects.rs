@@ -9,7 +9,10 @@ use crate::{
 };
 use anyhow::{Result, anyhow};
 
-use super::{build_icon, build_patch_icon, page_options, parse_property_values, resolve_space};
+use super::{
+    build_icon, build_patch_icon, page_options, property_values::parse_property_values,
+    resolve_space,
+};
 
 pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
