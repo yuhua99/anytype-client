@@ -153,5 +153,22 @@ mod tests {
             space_file_path_with_skip_bin("s1", "f1", true),
             "/spaces/s1/files/f1?skip_bin=true"
         );
+        // Lists domain (broadened centralization)
+        assert_eq!(
+            space_list_views_path("s1", "l1"),
+            "/spaces/s1/lists/l1/views"
+        );
+        assert_eq!(
+            space_list_view_objects_path("s1", "l1", "v1"),
+            "/spaces/s1/lists/l1/views/v1/objects"
+        );
+        assert_eq!(
+            space_list_objects_path("s1", "l1"),
+            "/spaces/s1/lists/l1/objects"
+        );
+        assert_eq!(
+            space_list_object_path("s1", "l1", "o1"),
+            "/spaces/s1/lists/l1/objects/o1"
+        );
     }
 }

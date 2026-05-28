@@ -17,7 +17,7 @@ impl AnytypeClient {
     ) -> Result<ViewListResponse> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/lists/{list_id}/views"),
+            &super::space_list_views_path(space_id, list_id),
             Option::<&()>::None,
             page,
         )
@@ -43,7 +43,7 @@ impl AnytypeClient {
     ) -> Result<ObjectListResponse> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/lists/{list_id}/views/{view_id}/objects"),
+            &super::space_list_view_objects_path(space_id, list_id, view_id),
             Option::<&()>::None,
             page,
         )
@@ -58,7 +58,7 @@ impl AnytypeClient {
     ) -> Result<()> {
         self.request_empty(
             Method::POST,
-            &format!("/spaces/{space_id}/lists/{list_id}/objects"),
+            &super::space_list_objects_path(space_id, list_id),
             Some(&AddToListRequest { objects }),
         )
         .await
@@ -72,7 +72,7 @@ impl AnytypeClient {
     ) -> Result<()> {
         self.request_empty(
             Method::DELETE,
-            &format!("/spaces/{space_id}/lists/{list_id}/objects/{object_id}"),
+            &super::space_list_object_path(space_id, list_id, object_id),
             Option::<&()>::None,
         )
         .await
