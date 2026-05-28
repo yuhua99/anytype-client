@@ -72,8 +72,8 @@ Tasks:
   - [ ] args in
   - [ ] call service/api
   - [ ] print result
-- [ ] Ban HTTP calls from output layer.
-- [ ] Ban rendering from service/API layers.
+- [x] Ban HTTP calls from output layer.
+- [x] Ban rendering from service/API layers.
 
 Exit criteria:
 
