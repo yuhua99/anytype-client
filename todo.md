@@ -84,10 +84,10 @@ Exit criteria:
 ## Phase 2 — Type system cleanup
 
 - [ ] Replace stringly enums with real enums:
-  - [ ] sort property
-  - [ ] sort direction
-  - [ ] property format
-  - [ ] icon color
+  - [x] sort property
+  - [x] sort direction
+  - [x] property format
+  - [x] icon color
   - [x] object layout
   - [ ] any repeated constrained string
 - [ ] Introduce newtypes for IDs if useful:
