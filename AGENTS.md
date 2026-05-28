@@ -120,10 +120,28 @@ cargo test
 - If schema is fetched locally, place it in ignored working directories such as `.openapi/`.
 - Generated files must have clear source, refresh command, and ownership.
 
+## Commit message rules
+
+Use `<type>: <imperative summary>`.
+
+Allowed types: `feat`, `fix`, `refactor`, `docs`, `chore`.
+
+Examples:
+
+```text
+feat: add typed search sort options
+fix: preserve legacy raw search filters
+refactor: move search workflow to service layer
+docs: document CLI command baseline
+chore: add CI quality gates
+```
+
+Keep commits focused. Avoid vague messages like `update`, `cleanup`, or `wip`.
+
 ## Refactor rules
 
 - Make small commits with one architectural move each.
 - Update `todo.md` when completing planned refactor tasks.
-- Do not mix formatting-only changes with logic changes unless the quality gate requires it.
+- Do not mix formatting-only changes with logic changes unless quality gate requires it.
 - Preserve behavior first; change architecture second.
-- If behavior changes, add tests that explain the new contract.
+- If behavior changes, add tests that explain new contract.
