@@ -4,6 +4,7 @@ use serde_json::Value;
 use super::{DataResponse, FilterExpression, Object, SortDirection, SortProperty};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SearchRequest {
     #[serde(default)]
     pub query: String,
@@ -19,6 +20,7 @@ pub struct SearchRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SortOptions {
     pub property_key: SortProperty,
     #[serde(default)]
