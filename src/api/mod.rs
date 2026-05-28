@@ -14,7 +14,7 @@ pub use client::{AnytypeClient, PageOptions};
 
 // Centralized API endpoint path builders.
 // Owned by the api layer; used only by endpoint method implementations.
-// Grouped by domain for maintainability; currently covers objects, search, types, properties, and tags.
+// Grouped by domain for maintainability; currently covers objects, search, types, properties, tags, files, and lists.
 
 fn global_search_path() -> &'static str {
     "/search"
@@ -71,6 +71,40 @@ fn space_property_tag_path(space_id: &str, property_id: &str, tag_id: &str) -> S
     format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}")
 }
 
+// Files domain paths
+fn space_files_path(space_id: &str) -> String {
+    format!("/spaces/{space_id}/files")
+}
+
+fn space_file_path(space_id: &str, file_id: &str) -> String {
+    format!("/spaces/{space_id}/files/{file_id}")
+}
+
+fn space_file_path_with_width(space_id: &str, file_id: &str, width: i64) -> String {
+    format!("/spaces/{space_id}/files/{file_id}?width={width}")
+}
+
+fn space_file_path_with_skip_bin(space_id: &str, file_id: &str, skip_bin: bool) -> String {
+    format!("/spaces/{space_id}/files/{file_id}?skip_bin={skip_bin}")
+}
+
+// Lists domain paths
+fn space_list_views_path(space_id: &str, list_id: &str) -> String {
+    format!("/spaces/{space_id}/lists/{list_id}/views")
+}
+
+fn space_list_view_objects_path(space_id: &str, list_id: &str, view_id: &str) -> String {
+    format!("/spaces/{space_id}/lists/{list_id}/views/{view_id}/objects")
+}
+
+fn space_list_objects_path(space_id: &str, list_id: &str) -> String {
+    format!("/spaces/{space_id}/lists/{list_id}/objects")
+}
+
+fn space_list_object_path(space_id: &str, list_id: &str, object_id: &str) -> String {
+    format!("/spaces/{space_id}/lists/{list_id}/objects/{object_id}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,6 +141,17 @@ mod tests {
         assert_eq!(
             space_property_tag_path("s1", "p1", "t1"),
             "/spaces/s1/properties/p1/tags/t1"
+        );
+        // Files domain (broadened centralization)
+        assert_eq!(space_files_path("s1"), "/spaces/s1/files");
+        assert_eq!(space_file_path("s1", "f1"), "/spaces/s1/files/f1");
+        assert_eq!(
+            space_file_path_with_width("s1", "f1", 100),
+            "/spaces/s1/files/f1?width=100"
+        );
+        assert_eq!(
+            space_file_path_with_skip_bin("s1", "f1", true),
+            "/spaces/s1/files/f1?skip_bin=true"
         );
     }
 }
