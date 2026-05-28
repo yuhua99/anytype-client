@@ -101,6 +101,7 @@ Exit criteria:
 - [ ] Add `deny_unknown_fields` where schema strictness is desired.
 - [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it:
   - [x] Downgrade internal root modules (`commands`, `config`, `services`).
+  - [x] Downgrade service module item visibility.
   - [ ] Audit API/model item-level visibility.
 - [ ] Remove dead public types or wire them into usage.
 

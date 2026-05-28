@@ -18,7 +18,7 @@ mod counts;
 
 pub(crate) use counts::{ObjectCountResult, count_objects};
 
-pub struct FindObjectsParams {
+pub(crate) struct FindObjectsParams {
     pub space: String,
     pub type_key: Option<String>,
     pub tag: Option<String>,
@@ -134,7 +134,7 @@ pub(crate) async fn update_object(
         .object)
 }
 
-pub async fn find_objects(
+pub(crate) async fn find_objects(
     client: &AnytypeClient,
     params: FindObjectsParams,
 ) -> Result<Vec<Object>> {

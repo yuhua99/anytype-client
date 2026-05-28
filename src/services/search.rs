@@ -10,7 +10,7 @@ use crate::{
     services::space_resolution::resolve_space,
 };
 
-pub struct SearchParams {
+pub(crate) struct SearchParams {
     pub query: String,
     pub types: Vec<String>,
     pub sort: Option<SortProperty>,
@@ -20,7 +20,7 @@ pub struct SearchParams {
     pub page: Option<PageOptions>,
 }
 
-pub async fn search(client: &AnytypeClient, params: SearchParams) -> Result<Vec<Object>> {
+pub(crate) async fn search(client: &AnytypeClient, params: SearchParams) -> Result<Vec<Object>> {
     let req = SearchRequest {
         query: params.query,
         types: params.types,
