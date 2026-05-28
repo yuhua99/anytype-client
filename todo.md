@@ -180,7 +180,8 @@ Exit criteria:
   Verified: `Table::new` + `Style` only in `src/output.rs`; models use only `#[derive(Tabled)]` + `#[tabled(skip)]` attrs.
 - [x] Avoid printing inside services/API.
   Verified: zero `println!`/`print_*`/`output::` in `src/{services,api}/**`; confined to thin `src/commands/*` orchestration.
-- [ ] Add output tests for representative objects.
+- [x] Add output tests for representative objects.
+  Added in `tests/output_rendering.rs`: exact-string json for `Space` + table for `Property` using real model instances (minimal construction, stable output).
 - [ ] Standardize success messages.
 
 Exit criteria:
