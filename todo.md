@@ -135,7 +135,7 @@ Exit criteria:
 
 ## Phase 4 — API client quality
 
-- [ ] Make endpoint paths centralized or strongly grouped.
+- [x] Make endpoint paths centralized or strongly grouped.
   - [x] Initial narrow slice: object and search endpoint paths centralized as private helpers in `src/api/mod.rs`.
   - [x] Broadened to types domain (list/create/get/update/delete + templates paths) using private helpers in `src/api/mod.rs`.
   - [x] Broadened to tags domain (list/get/create/update/delete paths) using private helpers in `src/api/mod.rs`.
