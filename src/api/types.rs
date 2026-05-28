@@ -19,7 +19,7 @@ impl AnytypeClient {
     ) -> Result<DataResponse<ObjectType>> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/types"),
+            &super::space_types_path(space_id),
             Option::<&()>::None,
             page,
         )
@@ -31,18 +31,14 @@ impl AnytypeClient {
         space_id: &str,
         req: &CreateTypeRequest,
     ) -> Result<TypeResponse> {
-        self.request(
-            Method::POST,
-            &format!("/spaces/{space_id}/types"),
-            Some(req),
-        )
-        .await
+        self.request(Method::POST, &super::space_types_path(space_id), Some(req))
+            .await
     }
 
     pub async fn type_get(&self, space_id: &str, type_id: &str) -> Result<TypeResponse> {
         self.request(
             Method::GET,
-            &format!("/spaces/{space_id}/types/{type_id}"),
+            &super::space_type_path(space_id, type_id),
             Option::<&()>::None,
         )
         .await
@@ -56,7 +52,7 @@ impl AnytypeClient {
     ) -> Result<TypeResponse> {
         self.request(
             Method::PATCH,
-            &format!("/spaces/{space_id}/types/{type_id}"),
+            &super::space_type_path(space_id, type_id),
             Some(req),
         )
         .await
@@ -65,7 +61,7 @@ impl AnytypeClient {
     pub async fn delete_type(&self, space_id: &str, type_id: &str) -> Result<DeleteTypeResponse> {
         self.request(
             Method::DELETE,
-            &format!("/spaces/{space_id}/types/{type_id}"),
+            &super::space_type_path(space_id, type_id),
             Option::<&()>::None,
         )
         .await
@@ -83,7 +79,7 @@ impl AnytypeClient {
     ) -> Result<DataResponse<Template>> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/types/{type_id}/templates"),
+            &super::space_type_templates_path(space_id, type_id),
             Option::<&()>::None,
             page,
         )
@@ -98,7 +94,7 @@ impl AnytypeClient {
     ) -> Result<TemplateResponse> {
         self.request(
             Method::GET,
-            &format!("/spaces/{space_id}/types/{type_id}/templates/{template_id}"),
+            &super::space_type_template_path(space_id, type_id, template_id),
             Option::<&()>::None,
         )
         .await
