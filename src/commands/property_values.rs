@@ -61,3 +61,55 @@ fn parse_json_value<T: DeserializeOwned>(value: Value, arg: &str) -> Result<T> {
 fn parse_json(input: &str, arg: &str) -> Result<Value> {
     serde_json::from_str(input).map_err(|err| anyhow!("invalid JSON for {arg}: {err}"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::PropertyLinkValue;
+
+    #[test]
+    fn parses_repeatable_property_values() {
+        let values = parse_property_values(PropertyValueArgs {
+            properties: vec![r#"{"key":"status","select":"done"}"#.into()],
+            properties_json: None,
+        })
+        .unwrap();
+
+        assert!(matches!(values[0], PropertyLinkValue::Select(_)));
+    }
+
+    #[test]
+    fn parses_property_value_array() {
+        let values = parse_property_values(PropertyValueArgs {
+            properties: Vec::new(),
+            properties_json: Some(
+                r#"[{"key":"done","checkbox":true},{"key":"title","text":"Task"}]"#.into(),
+            ),
+        })
+        .unwrap();
+
+        assert_eq!(values.len(), 2);
+    }
+
+    #[test]
+    fn rejects_non_object_property_value() {
+        let err = parse_property_values(PropertyValueArgs {
+            properties: vec!["[]".into()],
+            properties_json: None,
+        })
+        .unwrap_err();
+
+        assert!(err.to_string().contains("--property must be a JSON object"));
+    }
+
+    #[test]
+    fn rejects_invalid_property_schema() {
+        let err = parse_property_values(PropertyValueArgs {
+            properties: vec![r#"{"key":"status","select":"done","extra":true}"#.into()],
+            properties_json: None,
+        })
+        .unwrap_err();
+
+        assert!(err.to_string().contains("invalid schema for --property"));
+    }
+}

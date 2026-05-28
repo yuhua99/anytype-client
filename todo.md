@@ -125,7 +125,7 @@ Exit criteria:
   - [x] filter parsing in `commands/filter_parsing.rs`
 - [ ] Return actionable errors with arg name and example.
 - [ ] Avoid silent fallback except explicitly documented compatibility paths.
-- [ ] Add tests for each parser module.
+- [x] Add tests for each parser module.
 
 Exit criteria:
 
