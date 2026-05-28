@@ -89,7 +89,7 @@ Exit criteria:
   - [x] property format
   - [x] icon color
   - [x] object layout
-  - [ ] any repeated constrained string:
+  - [x] any repeated constrained string:
     - [x] object body format
 - [x] Introduce newtypes for IDs if useful:
   - [x] Deferred `SpaceId`.
@@ -103,12 +103,12 @@ Exit criteria:
 - [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it:
   - [x] Downgrade internal root modules (`commands`, `config`, `services`).
   - [x] Downgrade service module item visibility.
-  - [ ] Audit API/model item-level visibility.
-- [ ] Remove dead public types or wire them into usage.
+  - [x] Audit API/model item-level visibility; keep `api`, `models`, `cli`, and `output` public as crate API surface.
+- [x] Remove dead public types or wire them into usage; remaining public API endpoints/models are intentional crate surface.
 
 Exit criteria:
 
-- [ ] Invalid states become unrepresentable where practical.
+- [x] Invalid states become unrepresentable where practical.
 
 ---
 
