@@ -47,7 +47,7 @@ src/
   services/           # business workflows
   api/                # HTTP client + endpoint methods
   models/             # request/response DTOs
-  output/             # renderers
+  output.rs or output/ # renderers
   config.rs
   error.rs            # optional typed app errors
 ```
@@ -57,7 +57,9 @@ Tasks:
 - [x] Add `src/services/mod.rs`.
 - [x] Move search workflow into `services/search.rs`.
 - [ ] Move object workflows into `services/objects.rs`.
-- [ ] Move property/tag resolution into service helpers.
+- [ ] Move property/tag resolution into domain modules:
+  - [ ] `services/property_resolution.rs`
+  - [ ] `services/tag_resolution.rs`
 - [ ] Keep `commands/*` limited to:
   - [ ] args in
   - [ ] call service/api
@@ -104,13 +106,13 @@ Exit criteria:
   - [ ] `CreateObjectRequest`
   - [ ] `UpdateObjectRequest`
   - [ ] property update payloads
-- [ ] Centralize CLI JSON parsing helpers:
-  - [ ] raw object parsing
-  - [ ] property parsing
-  - [ ] filter parsing
+- [ ] Move CLI JSON parsing into named parser modules:
+  - [ ] raw object parsing in domain-specific parser module
+  - [ ] property parsing in `services/property_values.rs`
+  - [ ] filter parsing in `services/filter_parsing.rs`
 - [ ] Return actionable errors with arg name and example.
 - [ ] Avoid silent fallback except explicitly documented compatibility paths.
-- [ ] Add tests for each parser helper.
+- [ ] Add tests for each parser module.
 
 Exit criteria:
 
@@ -123,7 +125,7 @@ Exit criteria:
 - [ ] Make endpoint paths centralized or strongly grouped.
 - [ ] Ensure all API methods accept typed request structs and return typed responses.
 - [ ] Add request tests using mocked transport or test client.
-- [ ] Consider trait boundary for HTTP transport:
+- [ ] Consider trait boundary for HTTP transport only if tests or multiple transports need it:
 
 ```rust
 trait Transport {
@@ -222,7 +224,8 @@ Exit criteria:
 
 ## Phase 9 — Lints and quality gates
 
-- [ ] Enable strict clippy in CI.
+- [x] Enable strict clippy in CI. See `.github/workflows/ci.yml`.
+- [ ] Evaluate additional lint denies after architecture stabilizes.
 - [ ] Fix warnings instead of allowing globally.
 - [ ] Consider selected lint denies:
   - [ ] `clippy::unwrap_used` outside tests
