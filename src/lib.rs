@@ -1,10 +1,10 @@
 pub mod api;
 pub mod cli;
-pub mod commands;
-pub mod config;
+pub(crate) mod commands;
+pub(crate) mod config;
 pub mod models;
 pub mod output;
-pub mod services;
+pub(crate) mod services;
 
 use anyhow::{Result, anyhow};
 use clap::Parser;

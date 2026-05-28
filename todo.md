@@ -98,7 +98,9 @@ Exit criteria:
   - [ ] `FileId`
 - [ ] Use `serde_json::Value` only at explicit raw JSON boundaries.
 - [ ] Add `deny_unknown_fields` where schema strictness is desired.
-- [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it.
+- [ ] Audit all `pub`; downgrade to `pub(crate)` unless external API needs it:
+  - [x] Downgrade internal root modules (`commands`, `config`, `services`).
+  - [ ] Audit API/model item-level visibility.
 - [ ] Remove dead public types or wire them into usage.
 
 Exit criteria:
