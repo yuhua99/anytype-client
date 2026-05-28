@@ -18,7 +18,7 @@ Tests lock behavior before refactor.
 
 ## Phase 0 — Baseline and safety net
 
-- [ ] Record current supported CLI commands and examples.
+- [x] Record current supported CLI commands and examples. See `docs/cli-commands.md`.
 - [ ] Add smoke tests for top-level CLI parse/help.
 - [ ] Add request-body serialization tests for every API endpoint.
 - [ ] Add serde round-trip tests for core models.
