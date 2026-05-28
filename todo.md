@@ -194,27 +194,13 @@ Exit criteria:
 
 ## Phase 6 — OpenAPI/schema policy
 
-Pick one path.
-
-### Option A: no committed live snapshot
-
-- [ ] Add script: `scripts/fetch-openapi.sh`.
-- [ ] Add ignored dir: `.openapi/`.
-- [ ] Document how to refresh schema locally.
-
-### Option B: committed normalized schema
-
-- [ ] Move schema to `schemas/anytype.openapi.json`.
-- [ ] Normalize formatting/deterministic order.
-- [ ] Use it for one of:
-  - [ ] code generation
-  - [ ] schema drift tests
-  - [ ] docs generation
-- [ ] Add CI check for drift or validation.
+- [x] Chose policy: no committed live snapshot (follows AGENTS.md: "Do not commit unreferenced live API snapshots in repo root"). No OpenAPI schema, generated artifacts, scripts, or `.openapi/` present (prior removal of root snapshot; searches confirm clean state, no references in code/docs).
+- Future schema (if any) would go under `schemas/` only with documented consumption + ownership per AGENTS.md. No generation workflow invented here.
 
 Exit criteria:
 
-- [ ] No unreferenced generated/live artifacts in repo root.
+- [x] No unreferenced generated/live artifacts in repo root.
+  Verified by filesystem + rg inspection: none present.
 
 ---
 
