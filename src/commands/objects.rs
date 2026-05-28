@@ -3,10 +3,8 @@ use crate::{
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
     models::{CreateObjectRequest, UpdateObjectRequest},
     output::{print_data, print_one},
-    services::{
-        objects::{self, FindObjectsParams, ObjectCountResult},
-        property_resolution::resolve_property,
-        tag_resolution::resolve_tag_from_list,
+    services::objects::{
+        self, BulkUpdateParams, BulkUpdateResult, FindObjectsParams, ObjectCountResult,
     },
 };
 use anyhow::{Result, anyhow};
@@ -129,95 +127,30 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             tag_remove,
             dry_run,
         } => {
-            let id = resolve_space(client, &space).await?;
-
-            // Collect target object IDs
-            let object_ids =
-                objects::load_object_ids(&ids_file, &ids, &query, &types, client, &id).await?;
-            if object_ids.is_empty() {
-                eprintln!("no objects matched");
-                return Ok(());
-            }
-
-            let need_tags = !tag_add.is_empty() || !tag_remove.is_empty();
-            let prop_name = if need_tags {
-                Some(tag_property.as_deref().ok_or_else(|| {
-                    anyhow!("--tag-property is required when using --tag-add or --tag-remove")
-                })?)
-            } else {
-                None
-            };
-
-            // Resolve tag list once if needed
-            let (_prop_id, all_tags) = if let Some(prop) = prop_name {
-                let pid = resolve_property(client, &id, prop).await?;
-                let tags = client.tags(&id, &pid).await?.data;
-                (Some(pid), tags)
-            } else {
-                (None, Vec::new())
-            };
-
-            for oid in &object_ids {
-                let mut req = UpdateObjectRequest {
-                    type_key: None,
-                    name: None,
-                    markdown: None,
-                    icon: None,
-                    properties: Vec::new(),
-                };
-
-                let mut changes = Vec::new();
-
-                if need_tags {
-                    let prop = prop_name.unwrap();
-                    let current = objects::get_object_tag_ids(client, &id, oid, prop).await?;
-                    let mut tag_ids = current.clone();
-
-                    for name in &tag_add {
-                        let tag_id = resolve_tag_from_list(&all_tags, name)?;
-                        if !tag_ids.contains(&tag_id) {
-                            tag_ids.push(tag_id.clone());
-                            changes.push(format!("+{name}"));
-                        }
+            match objects::update_many_objects(
+                client,
+                BulkUpdateParams {
+                    space,
+                    ids_file,
+                    ids,
+                    query,
+                    types,
+                    tag_property,
+                    tag_add,
+                    tag_remove,
+                    dry_run,
+                },
+            )
+            .await?
+            {
+                BulkUpdateResult::NoMatches => eprintln!("no objects matched"),
+                BulkUpdateResult::Applied { matched } => eprintln!("{matched} objects updated"),
+                BulkUpdateResult::DryRun { matched, changes } => {
+                    for change in changes {
+                        eprintln!("{}: {}", change.name, change.changes.join(" "));
                     }
-                    for name in &tag_remove {
-                        let tag_id = resolve_tag_from_list(&all_tags, name)?;
-                        if tag_ids.contains(&tag_id) {
-                            tag_ids.retain(|i| i != &tag_id);
-                            changes.push(format!("-{name}"));
-                        }
-                    }
-
-                    if tag_ids != current {
-                        req.properties
-                            .push(serde_json::from_value(serde_json::json!({
-                                "key": prop,
-                                "multi_select": tag_ids
-                            }))?);
-                    }
+                    eprintln!("{matched} objects would change (dry run)");
                 }
-
-                if req.properties.is_empty() {
-                    continue;
-                }
-
-                if dry_run {
-                    let obj = client.object(&id, oid, None).await?.object;
-                    let name = if obj.name.is_empty() {
-                        oid.as_str()
-                    } else {
-                        &obj.name
-                    };
-                    eprintln!("{name}: {}", changes.join(" "));
-                } else {
-                    client.update_object(&id, oid, &req).await?;
-                }
-            }
-
-            if dry_run {
-                eprintln!("{} objects would change (dry run)", object_ids.len());
-            } else {
-                eprintln!("{} objects updated", object_ids.len());
             }
             Ok(())
         }

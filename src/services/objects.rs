@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::{
     api::AnytypeClient,
-    models::{Object, SearchRequest, Space},
+    models::{Object, SearchRequest, Space, UpdateObjectRequest},
     services::{property_resolution::resolve_property, tag_resolution::resolve_tag_from_list},
 };
 
@@ -25,6 +25,34 @@ pub enum ObjectCountResult {
         counts: BTreeMap<String, usize>,
         total: usize,
     },
+}
+
+pub(crate) struct BulkUpdateParams {
+    pub space: String,
+    pub ids_file: Option<PathBuf>,
+    pub ids: Vec<String>,
+    pub query: Option<String>,
+    pub types: Vec<String>,
+    pub tag_property: Option<String>,
+    pub tag_add: Vec<String>,
+    pub tag_remove: Vec<String>,
+    pub dry_run: bool,
+}
+
+pub(crate) enum BulkUpdateResult {
+    NoMatches,
+    Applied {
+        matched: usize,
+    },
+    DryRun {
+        matched: usize,
+        changes: Vec<BulkUpdateChange>,
+    },
+}
+
+pub(crate) struct BulkUpdateChange {
+    pub name: String,
+    pub changes: Vec<String>,
 }
 
 pub async fn find_objects(
@@ -188,6 +216,110 @@ pub(crate) async fn load_object_ids(
     result.sort();
     result.dedup();
     Ok(result)
+}
+
+pub(crate) async fn update_many_objects(
+    client: &AnytypeClient,
+    params: BulkUpdateParams,
+) -> Result<BulkUpdateResult> {
+    let space_id = resolve_space(client, &params.space).await?;
+    let object_ids = load_object_ids(
+        &params.ids_file,
+        &params.ids,
+        &params.query,
+        &params.types,
+        client,
+        &space_id,
+    )
+    .await?;
+
+    if object_ids.is_empty() {
+        return Ok(BulkUpdateResult::NoMatches);
+    }
+
+    let need_tags = !params.tag_add.is_empty() || !params.tag_remove.is_empty();
+    let prop_name = if need_tags {
+        Some(params.tag_property.as_deref().ok_or_else(|| {
+            anyhow!("--tag-property is required when using --tag-add or --tag-remove")
+        })?)
+    } else {
+        None
+    };
+
+    let all_tags = if let Some(prop) = prop_name {
+        let property_id = resolve_property(client, &space_id, prop).await?;
+        client.tags(&space_id, &property_id).await?.data
+    } else {
+        Vec::new()
+    };
+
+    let mut dry_run_changes = Vec::new();
+
+    for object_id in &object_ids {
+        let mut req = UpdateObjectRequest {
+            type_key: None,
+            name: None,
+            markdown: None,
+            icon: None,
+            properties: Vec::new(),
+        };
+        let mut changes = Vec::new();
+
+        if let Some(prop) = prop_name {
+            let current = get_object_tag_ids(client, &space_id, object_id, prop).await?;
+            let mut tag_ids = current.clone();
+
+            for name in &params.tag_add {
+                let tag_id = resolve_tag_from_list(&all_tags, name)?;
+                if !tag_ids.contains(&tag_id) {
+                    tag_ids.push(tag_id.clone());
+                    changes.push(format!("+{name}"));
+                }
+            }
+            for name in &params.tag_remove {
+                let tag_id = resolve_tag_from_list(&all_tags, name)?;
+                if tag_ids.contains(&tag_id) {
+                    tag_ids.retain(|id| id != &tag_id);
+                    changes.push(format!("-{name}"));
+                }
+            }
+
+            if tag_ids != current {
+                req.properties
+                    .push(serde_json::from_value(serde_json::json!({
+                        "key": prop,
+                        "multi_select": tag_ids
+                    }))?);
+            }
+        }
+
+        if req.properties.is_empty() {
+            continue;
+        }
+
+        if params.dry_run {
+            let object = client.object(&space_id, object_id, None).await?.object;
+            let name = if object.name.is_empty() {
+                object_id.clone()
+            } else {
+                object.name
+            };
+            dry_run_changes.push(BulkUpdateChange { name, changes });
+        } else {
+            client.update_object(&space_id, object_id, &req).await?;
+        }
+    }
+
+    if params.dry_run {
+        Ok(BulkUpdateResult::DryRun {
+            matched: object_ids.len(),
+            changes: dry_run_changes,
+        })
+    } else {
+        Ok(BulkUpdateResult::Applied {
+            matched: object_ids.len(),
+        })
+    }
 }
 
 pub async fn count_objects(
