@@ -24,10 +24,10 @@ Tests lock behavior before refactor.
 - [x] Add serde round-trip tests for core models. See `tests/model_serde.rs`.
 - [x] Add legacy compatibility tests for raw JSON inputs. See `tests/legacy_compatibility.rs`.
 - [x] Add golden/snapshot tests for table/json/yaml output where stable. See `tests/output_rendering.rs`.
-- [ ] Add CI command list:
-  - [ ] `cargo fmt --check`
-  - [ ] `cargo clippy --all-targets -- -D warnings`
-  - [ ] `cargo test`
+- [x] Add CI command list. See `.github/workflows/ci.yml`:
+  - [x] `cargo fmt --check`
+  - [x] `cargo clippy --all-targets -- -D warnings`
+  - [x] `cargo test`
 - [ ] Decide MSRV or document Rust toolchain policy.
 
 Exit criteria:

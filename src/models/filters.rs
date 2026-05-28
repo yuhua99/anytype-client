@@ -231,20 +231,15 @@ pub enum SortDirection {
 }
 
 /// Known sortable property keys for search.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default)]
 #[serde(rename_all = "snake_case")]
 #[value(rename_all = "snake_case")]
 pub enum SortProperty {
     CreatedDate,
+    #[default]
     LastModifiedDate,
     LastOpenedDate,
     Name,
-}
-
-impl Default for SortProperty {
-    fn default() -> Self {
-        SortProperty::LastModifiedDate
-    }
 }
 
 #[cfg(test)]

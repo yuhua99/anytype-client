@@ -10,7 +10,10 @@ use crate::{
     output::{print_data, print_one},
 };
 
-use super::{build_icon, build_patch_icon, page_options, parse_property_values, resolve_property, resolve_space};
+use super::{
+    build_icon, build_patch_icon, page_options, parse_property_values, resolve_property,
+    resolve_space,
+};
 
 pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputFormat) -> Result<()> {
     match args.command {
@@ -73,22 +76,17 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                 properties: parse_property_values(properties)?,
             };
             if !tag_add.is_empty() || !tag_remove.is_empty() {
-                let prop_name = tag_property
-                    .as_deref()
-                    .ok_or_else(|| anyhow!("--tag-property is required when using --tag-add or --tag-remove"))?;
-                let tag_ids = resolve_tag_ids(
-                    client,
-                    &id,
-                    &object_id,
-                    prop_name,
-                    &tag_add,
-                    &tag_remove,
-                )
-                .await?;
-                req.properties.push(serde_json::from_value(serde_json::json!({
-                    "key": prop_name,
-                    "multi_select": tag_ids
-                }))?);
+                let prop_name = tag_property.as_deref().ok_or_else(|| {
+                    anyhow!("--tag-property is required when using --tag-add or --tag-remove")
+                })?;
+                let tag_ids =
+                    resolve_tag_ids(client, &id, &object_id, prop_name, &tag_add, &tag_remove)
+                        .await?;
+                req.properties
+                    .push(serde_json::from_value(serde_json::json!({
+                        "key": prop_name,
+                        "multi_select": tag_ids
+                    }))?);
             }
             print_one(
                 client.update_object(&id, &object_id, &req).await?.object,
@@ -138,11 +136,9 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
 
             let need_tags = !tag_add.is_empty() || !tag_remove.is_empty();
             let prop_name = if need_tags {
-                Some(
-                    tag_property
-                        .as_deref()
-                        .ok_or_else(|| anyhow!("--tag-property is required when using --tag-add or --tag-remove"))?,
-                )
+                Some(tag_property.as_deref().ok_or_else(|| {
+                    anyhow!("--tag-property is required when using --tag-add or --tag-remove")
+                })?)
             } else {
                 None
             };
@@ -188,10 +184,11 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                     }
 
                     if tag_ids != current {
-                        req.properties.push(serde_json::from_value(serde_json::json!({
-                            "key": prop,
-                            "multi_select": tag_ids
-                        }))?);
+                        req.properties
+                            .push(serde_json::from_value(serde_json::json!({
+                                "key": prop,
+                                "multi_select": tag_ids
+                            }))?);
                     }
                 }
 
@@ -233,10 +230,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             let id = resolve_space(client, &space).await?;
 
             // Search for all objects in space
-            let search_types = r#type
-                .as_ref()
-                .map(|t| vec![t.clone()])
-                .unwrap_or_default();
+            let search_types = r#type.as_ref().map(|t| vec![t.clone()]).unwrap_or_default();
             let req = SearchRequest {
                 query: name.clone().unwrap_or_default(),
                 types: search_types,
@@ -259,11 +253,11 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                         .find(|p| {
                             p.get("key")
                                 .and_then(Value::as_str)
-                                .map_or(false, |k| k.eq_ignore_ascii_case(prop))
+                                .is_some_and(|k| k.eq_ignore_ascii_case(prop))
                         })
                         .and_then(|p| p.get("multi_select"))
                         .and_then(Value::as_array)
-                        .map_or(false, |arr| {
+                        .is_some_and(|arr| {
                             arr.iter().any(|v| {
                                 v.as_str() == Some(&target_id)
                                     || v.get("id").and_then(Value::as_str) == Some(&target_id)
@@ -291,7 +285,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                     !obj.properties.iter().any(|p| {
                         p.get("key")
                             .and_then(Value::as_str)
-                            .map_or(false, |k| k.eq_ignore_ascii_case(missing_prop))
+                            .is_some_and(|k| k.eq_ignore_ascii_case(missing_prop))
                     })
                 });
             }
@@ -328,7 +322,13 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                         let type_name = obj
                             .object_type
                             .as_ref()
-                            .map(|t| if t.key.is_empty() { t.name.clone() } else { t.key.clone() })
+                            .map(|t| {
+                                if t.key.is_empty() {
+                                    t.name.clone()
+                                } else {
+                                    t.key.clone()
+                                }
+                            })
                             .unwrap_or_else(|| "(none)".to_string());
                         *counts.entry(type_name).or_insert(0) += 1;
                     }
@@ -343,7 +343,7 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
                         let found = obj.properties.iter().find(|p| {
                             p.get("key")
                                 .and_then(Value::as_str)
-                                .map_or(false, |k| k.eq_ignore_ascii_case(prop_key))
+                                .is_some_and(|k| k.eq_ignore_ascii_case(prop_key))
                         });
                         match found {
                             None => missing += 1,
@@ -471,7 +471,7 @@ async fn resolve_tag_ids(
         .find(|p| {
             p.get("key")
                 .and_then(Value::as_str)
-                .map_or(false, |k| k.eq_ignore_ascii_case(property_name_or_key))
+                .is_some_and(|k| k.eq_ignore_ascii_case(property_name_or_key))
         })
         .and_then(|p| p.get("multi_select"))
         .and_then(Value::as_array)
@@ -479,9 +479,9 @@ async fn resolve_tag_ids(
             arr.iter()
                 .filter_map(|v| {
                     // Handle both string IDs and tag objects
-                    v.as_str().map(String::from).or_else(|| {
-                        v.get("id").and_then(Value::as_str).map(String::from)
-                    })
+                    v.as_str()
+                        .map(String::from)
+                        .or_else(|| v.get("id").and_then(Value::as_str).map(String::from))
                 })
                 .collect()
         })
@@ -504,10 +504,7 @@ async fn resolve_tag_ids(
     Ok(tag_ids)
 }
 
-fn resolve_tag_from_list(
-    tags: &[crate::models::Tag],
-    name_or_key: &str,
-) -> Result<String> {
+fn resolve_tag_from_list(tags: &[crate::models::Tag], name_or_key: &str) -> Result<String> {
     if let Some(t) = tags.iter().find(|t| t.id == name_or_key) {
         return Ok(t.id.clone());
     }
@@ -607,16 +604,16 @@ async fn get_object_tag_ids(
         .find(|p| {
             p.get("key")
                 .and_then(Value::as_str)
-                .map_or(false, |k| k.eq_ignore_ascii_case(property_name_or_key))
+                .is_some_and(|k| k.eq_ignore_ascii_case(property_name_or_key))
         })
         .and_then(|p| p.get("multi_select"))
         .and_then(Value::as_array)
         .map(|arr| {
             arr.iter()
                 .filter_map(|v| {
-                    v.as_str().map(String::from).or_else(|| {
-                        v.get("id").and_then(Value::as_str).map(String::from)
-                    })
+                    v.as_str()
+                        .map(String::from)
+                        .or_else(|| v.get("id").and_then(Value::as_str).map(String::from))
                 })
                 .collect()
         })
@@ -628,19 +625,19 @@ fn property_matches_value(prop: &Value, target: &str) -> bool {
     // Try common value fields
     for key in ["text", "number", "select", "url", "email", "phone"] {
         if let Some(val) = prop.get(key) {
-            if val.as_str().map_or(false, |s| s.eq_ignore_ascii_case(target)) {
+            if val.as_str().is_some_and(|s| s.eq_ignore_ascii_case(target)) {
                 return true;
             }
-            if val.as_f64().map_or(false, |n| n.to_string() == target) {
+            if val.as_f64().is_some_and(|n| n.to_string() == target) {
                 return true;
             }
         }
     }
     // checkbox
-    if let Some(val) = prop.get("checkbox") {
-        if val.as_bool().map_or(false, |b| b.to_string() == target) {
-            return true;
-        }
+    if let Some(val) = prop.get("checkbox")
+        && val.as_bool().is_some_and(|b| b.to_string() == target)
+    {
+        return true;
     }
     false
 }
