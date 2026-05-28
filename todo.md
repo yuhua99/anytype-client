@@ -54,7 +54,7 @@ src/
 
 Tasks:
 
-- [ ] Add `src/services/mod.rs`.
+- [x] Add `src/services/mod.rs`.
 - [ ] Move search workflow into `services/search.rs`.
 - [ ] Move object workflows into `services/objects.rs`.
 - [ ] Move property/tag resolution into service helpers.

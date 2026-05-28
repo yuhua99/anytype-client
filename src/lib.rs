@@ -4,6 +4,7 @@ pub mod commands;
 pub mod config;
 pub mod models;
 pub mod output;
+pub mod services;
 
 use anyhow::{Result, anyhow};
 use clap::Parser;
