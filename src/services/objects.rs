@@ -144,12 +144,7 @@ pub(crate) async fn find_objects(
         .as_ref()
         .map(|r#type| vec![r#type.clone()])
         .unwrap_or_default();
-    let req = SearchRequest {
-        query: params.name.clone().unwrap_or_default(),
-        types: search_types,
-        filters: None,
-        sort: None,
-    };
+    let req = SearchRequest::new(params.name.clone().unwrap_or_default()).with_types(search_types);
     let mut results = client.space_search_page(&space_id, &req, None).await?.data;
 
     if let Some(tag_name) = &params.tag {
@@ -282,12 +277,7 @@ pub(crate) async fn load_object_ids(
     }
 
     if result.is_empty() {
-        let req = SearchRequest {
-            query: query.clone().unwrap_or_default(),
-            types: types.to_vec(),
-            filters: None,
-            sort: None,
-        };
+        let req = SearchRequest::new(query.clone().unwrap_or_default()).with_types(types.to_vec());
         let resp = client.space_search_page(space_id, &req, None).await?;
         result = resp.data.into_iter().map(|object| object.id).collect();
     }

@@ -115,7 +115,7 @@ Exit criteria:
 ## Phase 3 — Request builders and parsing boundaries
 
 - [ ] Add builders or constructors for complex requests:
-  - [ ] `SearchRequest`
+  - [x] `SearchRequest`
   - [ ] `CreateObjectRequest`
   - [ ] `UpdateObjectRequest`
   - [ ] property update payloads

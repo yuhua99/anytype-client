@@ -24,12 +24,7 @@ pub(crate) async fn count_objects(
     group_by: Option<String>,
 ) -> Result<ObjectCountResult> {
     let space_id = resolve_space(client, &space).await?;
-    let req = SearchRequest {
-        query: String::new(),
-        types: Vec::new(),
-        filters: None,
-        sort: None,
-    };
+    let req = SearchRequest::new(String::new());
     let results = client.space_search_page(&space_id, &req, None).await?.data;
     let total = results.len();
 

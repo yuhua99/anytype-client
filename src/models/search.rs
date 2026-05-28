@@ -19,12 +19,47 @@ pub struct SearchRequest {
     pub sort: Option<SortOptions>,
 }
 
+impl SearchRequest {
+    pub fn new(query: impl Into<String>) -> Self {
+        Self {
+            query: query.into(),
+            types: Vec::new(),
+            filters: None,
+            sort: None,
+        }
+    }
+
+    pub fn with_types(mut self, types: Vec<String>) -> Self {
+        self.types = types;
+        self
+    }
+
+    pub fn with_filters(mut self, filters: Option<SearchFilters>) -> Self {
+        self.filters = filters;
+        self
+    }
+
+    pub fn with_sort(mut self, sort: Option<SortOptions>) -> Self {
+        self.sort = sort;
+        self
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SortOptions {
     pub property_key: SortProperty,
     #[serde(default)]
     pub direction: SortDirection,
+}
+
+impl SortOptions {
+    pub fn new(property_key: SortProperty, direction: SortDirection) -> Self {
+        Self {
+            property_key,
+            direction,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

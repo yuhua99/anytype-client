@@ -17,15 +17,14 @@ pub(crate) struct SearchParams {
 }
 
 pub(crate) async fn search(client: &AnytypeClient, params: SearchParams) -> Result<Vec<Object>> {
-    let req = SearchRequest {
-        query: params.query,
-        types: params.types,
-        filters: params.filters,
-        sort: params.sort.map(|property_key| SortOptions {
-            property_key,
-            direction: params.direction,
-        }),
-    };
+    let req = SearchRequest::new(params.query)
+        .with_types(params.types)
+        .with_filters(params.filters)
+        .with_sort(
+            params
+                .sort
+                .map(|property_key| SortOptions::new(property_key, params.direction)),
+        );
 
     let resp = if let Some(space) = params.space {
         let id = resolve_space(client, &space).await?;
