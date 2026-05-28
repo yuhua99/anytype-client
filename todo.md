@@ -147,7 +147,9 @@ Exit criteria:
 - [x] Ensure all API methods accept typed request structs and return typed responses.
 - [ ] Add request tests using mocked transport or test client.
   - [x] Initial unit tests added for the centralized object/search path helpers (module tests in `src/api/mod.rs` exercising the recent narrow centralization).
-- [ ] Consider trait boundary for HTTP transport only if tests or multiple transports need it:
+  (Deferred: requires adding dev-dep + client refactor for injection; current path-helper unit tests only.)
+- [x] Consider trait boundary for HTTP transport only if tests or multiple transports need it.
+  Decision: no `Transport` trait introduced today; concrete `AnytypeClient` (owning reqwest + auth/config in `client.rs`) suffices. Existing tests do not justify the refactor yet.
 
 ```rust
 trait Transport {
@@ -155,12 +157,15 @@ trait Transport {
 }
 ```
 
-- [ ] Keep retry/auth/config concerns out of endpoint methods.
-- [ ] Add consistent pagination handling.
+- [x] Keep retry/auth/config concerns out of endpoint methods.
+  Verified: all auth (bearer, Anytype-Version), base_url, http client, timeout live only in `client.rs`. Endpoint modules (`*.rs`) are pure path + typed body glue calling client methods.
+- [x] Add consistent pagination handling.
+  Verified: every paginated endpoint uses `*_page(..., Option<PageOptions>)` convenience wrapper + delegates to `self.request_data(..., page)`; `page_path` + `request_paginated` logic centralized in `client.rs`.
 
 Exit criteria:
 
 - [ ] API layer is boring HTTP glue, easy to mock, hard to misuse.
+  (Deferred pending mocked transport tests.)
 
 ---
 
