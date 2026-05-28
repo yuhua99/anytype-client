@@ -136,7 +136,7 @@ Exit criteria:
 ## Phase 4 — API client quality
 
 - [ ] Make endpoint paths centralized or strongly grouped.
-- [ ] Ensure all API methods accept typed request structs and return typed responses.
+- [x] Ensure all API methods accept typed request structs and return typed responses.
 - [ ] Add request tests using mocked transport or test client.
 - [ ] Consider trait boundary for HTTP transport only if tests or multiple transports need it:
 
