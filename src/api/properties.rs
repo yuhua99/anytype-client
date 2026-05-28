@@ -18,7 +18,7 @@ impl AnytypeClient {
     ) -> Result<PropertyListResponse> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/properties"),
+            &super::space_properties_path(space_id),
             Option::<&()>::None,
             page,
         )
@@ -28,7 +28,7 @@ impl AnytypeClient {
     pub async fn property(&self, space_id: &str, property_id: &str) -> Result<PropertyResponse> {
         self.request(
             Method::GET,
-            &format!("/spaces/{space_id}/properties/{property_id}"),
+            &super::space_property_path(space_id, property_id),
             Option::<&()>::None,
         )
         .await
@@ -41,7 +41,7 @@ impl AnytypeClient {
     ) -> Result<PropertyResponse> {
         self.request(
             Method::POST,
-            &format!("/spaces/{space_id}/properties"),
+            &super::space_properties_path(space_id),
             Some(req),
         )
         .await
@@ -55,7 +55,7 @@ impl AnytypeClient {
     ) -> Result<PropertyResponse> {
         self.request(
             Method::PATCH,
-            &format!("/spaces/{space_id}/properties/{property_id}"),
+            &super::space_property_path(space_id, property_id),
             Some(req),
         )
         .await
@@ -68,7 +68,7 @@ impl AnytypeClient {
     ) -> Result<PropertyResponse> {
         self.request(
             Method::DELETE,
-            &format!("/spaces/{space_id}/properties/{property_id}"),
+            &super::space_property_path(space_id, property_id),
             Option::<&()>::None,
         )
         .await

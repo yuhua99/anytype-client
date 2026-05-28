@@ -17,7 +17,7 @@ impl AnytypeClient {
     ) -> Result<TagListResponse> {
         self.request_data(
             Method::GET,
-            &format!("/spaces/{space_id}/properties/{property_id}/tags"),
+            &super::space_property_tags_path(space_id, property_id),
             Option::<&()>::None,
             page,
         )
@@ -32,7 +32,7 @@ impl AnytypeClient {
     ) -> Result<TagResponse> {
         self.request(
             Method::GET,
-            &format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}"),
+            &super::space_property_tag_path(space_id, property_id, tag_id),
             Option::<&()>::None,
         )
         .await
@@ -46,7 +46,7 @@ impl AnytypeClient {
     ) -> Result<TagResponse> {
         self.request(
             Method::POST,
-            &format!("/spaces/{space_id}/properties/{property_id}/tags"),
+            &super::space_property_tags_path(space_id, property_id),
             Some(req),
         )
         .await
@@ -61,7 +61,7 @@ impl AnytypeClient {
     ) -> Result<TagResponse> {
         self.request(
             Method::PATCH,
-            &format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}"),
+            &super::space_property_tag_path(space_id, property_id, tag_id),
             Some(req),
         )
         .await
@@ -75,7 +75,7 @@ impl AnytypeClient {
     ) -> Result<TagResponse> {
         self.request(
             Method::DELETE,
-            &format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}"),
+            &super::space_property_tag_path(space_id, property_id, tag_id),
             Option::<&()>::None,
         )
         .await

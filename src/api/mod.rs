@@ -14,7 +14,7 @@ pub use client::{AnytypeClient, PageOptions};
 
 // Centralized API endpoint path builders.
 // Owned by the api layer; used only by endpoint method implementations.
-// Grouped by domain for maintainability; currently covers objects, search, and types.
+// Grouped by domain for maintainability; currently covers objects, search, types, properties, and tags.
 
 fn global_search_path() -> &'static str {
     "/search"
@@ -53,6 +53,24 @@ fn space_type_template_path(space_id: &str, type_id: &str, template_id: &str) ->
     format!("/spaces/{space_id}/types/{type_id}/templates/{template_id}")
 }
 
+// Properties domain paths
+fn space_properties_path(space_id: &str) -> String {
+    format!("/spaces/{space_id}/properties")
+}
+
+fn space_property_path(space_id: &str, property_id: &str) -> String {
+    format!("/spaces/{space_id}/properties/{property_id}")
+}
+
+// Tags domain paths (nested under properties)
+fn space_property_tags_path(space_id: &str, property_id: &str) -> String {
+    format!("/spaces/{space_id}/properties/{property_id}/tags")
+}
+
+fn space_property_tag_path(space_id: &str, property_id: &str, tag_id: &str) -> String {
+    format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -77,6 +95,18 @@ mod tests {
         assert_eq!(
             space_type_template_path("s1", "t1", "tpl1"),
             "/spaces/s1/types/t1/templates/tpl1"
+        );
+        // Properties domain (broadened centralization)
+        assert_eq!(space_properties_path("s1"), "/spaces/s1/properties");
+        assert_eq!(space_property_path("s1", "p1"), "/spaces/s1/properties/p1");
+        // Tags domain (broadened centralization)
+        assert_eq!(
+            space_property_tags_path("s1", "p1"),
+            "/spaces/s1/properties/p1/tags"
+        );
+        assert_eq!(
+            space_property_tag_path("s1", "p1", "t1"),
+            "/spaces/s1/properties/p1/tags/t1"
         );
     }
 }
