@@ -1,8 +1,34 @@
+use std::fmt;
+
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tabled::Tabled;
 
 use super::{ExtraFields, Icon, PropertyLinkValue};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default)]
+#[serde(rename_all = "snake_case")]
+#[value(rename_all = "snake_case")]
+pub enum ObjectLayout {
+    #[default]
+    Basic,
+    Profile,
+    Action,
+    Note,
+}
+
+impl fmt::Display for ObjectLayout {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Basic => "basic",
+            Self::Profile => "profile",
+            Self::Action => "action",
+            Self::Note => "note",
+        };
+        f.write_str(value)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectTypeRef {
@@ -28,7 +54,7 @@ pub struct Object {
     #[tabled(rename = "type", display = "display_object_type")]
     pub object_type: Option<ObjectTypeRef>,
     #[serde(default, alias = "Layout")]
-    pub layout: String,
+    pub layout: ObjectLayout,
     #[serde(default, alias = "Archived")]
     pub archived: bool,
     #[serde(default, alias = "Markdown")]

@@ -88,7 +88,7 @@ Exit criteria:
   - [ ] sort direction
   - [ ] property format
   - [ ] icon color
-  - [ ] object layout
+  - [x] object layout
   - [ ] any repeated constrained string
 - [ ] Introduce newtypes for IDs if useful:
   - [ ] `SpaceId`

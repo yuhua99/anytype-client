@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tabled::Tabled;
 
-use super::{ExtraFields, Icon, Object, PropertyLink};
+use super::{ExtraFields, Icon, Object, ObjectLayout, PropertyLink};
 
 #[derive(Debug, Serialize, Deserialize, Tabled)]
 pub struct ObjectType {
@@ -13,7 +13,7 @@ pub struct ObjectType {
     #[serde(default, alias = "Name")]
     pub name: String,
     #[serde(default, alias = "Layout")]
-    pub layout: String,
+    pub layout: ObjectLayout,
     #[serde(default)]
     pub plural_name: String,
     #[serde(default, alias = "Description")]
@@ -49,7 +49,7 @@ pub struct CreateTypeRequest {
     pub key: Option<String>,
     pub name: String,
     pub plural_name: String,
-    pub layout: String,
+    pub layout: ObjectLayout,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub icon: Option<Icon>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -65,7 +65,7 @@ pub struct UpdateTypeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plural_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub layout: Option<String>,
+    pub layout: Option<ObjectLayout>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub icon: Option<Option<Icon>>,
     #[serde(skip_serializing_if = "Vec::is_empty")]

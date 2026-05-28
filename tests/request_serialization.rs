@@ -161,7 +161,7 @@ fn serializes_type_request_bodies() {
             key: Some("task".into()),
             name: "Task".into(),
             plural_name: "Tasks".into(),
-            layout: "basic".into(),
+            layout: ObjectLayout::Basic,
             icon: Some(Icon::Named {
                 name: "check".into(),
                 color: IconColor::Blue,

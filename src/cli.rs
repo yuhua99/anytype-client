@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
-use crate::models::{IconColor, PropertyFormat, SortDirection, SortProperty};
+use crate::models::{IconColor, ObjectLayout, PropertyFormat, SortDirection, SortProperty};
 
 #[derive(Parser)]
 #[command(
@@ -318,8 +318,8 @@ pub enum TypesCommand {
         name: String,
         #[arg(long)]
         plural_name: String,
-        #[arg(long, value_parser = ["basic", "profile", "action", "note"])]
-        layout: String,
+        #[arg(long, value_enum)]
+        layout: ObjectLayout,
         #[arg(long)]
         key: Option<String>,
         #[command(flatten)]
@@ -334,8 +334,8 @@ pub enum TypesCommand {
         name: Option<String>,
         #[arg(long)]
         plural_name: Option<String>,
-        #[arg(long, value_parser = ["basic", "profile", "action", "note"])]
-        layout: Option<String>,
+        #[arg(long, value_enum)]
+        layout: Option<ObjectLayout>,
         #[arg(long)]
         key: Option<String>,
         #[command(flatten)]
