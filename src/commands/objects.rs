@@ -8,6 +8,7 @@ use crate::{
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
     models::{CreateObjectRequest, SearchRequest, UpdateObjectRequest},
     output::{print_data, print_one},
+    services::objects::{self, FindObjectsParams, ObjectCountResult},
 };
 
 use super::{
@@ -227,70 +228,20 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             ids_only,
             names_only,
         } => {
-            let id = resolve_space(client, &space).await?;
+            let results = objects::find_objects(
+                client,
+                FindObjectsParams {
+                    space,
+                    type_key: r#type,
+                    tag,
+                    tag_property,
+                    property,
+                    name,
+                    missing_property,
+                },
+            )
+            .await?;
 
-            // Search for all objects in space
-            let search_types = r#type.as_ref().map(|t| vec![t.clone()]).unwrap_or_default();
-            let req = SearchRequest {
-                query: name.clone().unwrap_or_default(),
-                types: search_types,
-                filters: None,
-                sort: None,
-            };
-            let mut results = client.space_search_page(&id, &req, None).await?.data;
-
-            // Post-filter by tag
-            if let Some(tag_name) = &tag {
-                let prop = tag_property
-                    .as_deref()
-                    .ok_or_else(|| anyhow!("--tag-property is required when using --tag"))?;
-                let prop_id = resolve_property(client, &id, prop).await?;
-                let all_tags = client.tags(&id, &prop_id).await?.data;
-                let target_id = resolve_tag_from_list(&all_tags, tag_name)?;
-                results.retain(|obj| {
-                    obj.properties
-                        .iter()
-                        .find(|p| {
-                            p.get("key")
-                                .and_then(Value::as_str)
-                                .is_some_and(|k| k.eq_ignore_ascii_case(prop))
-                        })
-                        .and_then(|p| p.get("multi_select"))
-                        .and_then(Value::as_array)
-                        .is_some_and(|arr| {
-                            arr.iter().any(|v| {
-                                v.as_str() == Some(&target_id)
-                                    || v.get("id").and_then(Value::as_str) == Some(&target_id)
-                            })
-                        })
-                });
-            }
-
-            // Post-filter by property value
-            if let Some(prop_expr) = &property {
-                let (key, value) = prop_expr
-                    .split_once('=')
-                    .ok_or_else(|| anyhow!("--property must be key=value"))?;
-                results.retain(|obj| {
-                    obj.properties.iter().any(|p| {
-                        p.get("key").and_then(Value::as_str) == Some(key)
-                            && property_matches_value(p, value)
-                    })
-                });
-            }
-
-            // Post-filter: missing property
-            if let Some(missing_prop) = &missing_property {
-                results.retain(|obj| {
-                    !obj.properties.iter().any(|p| {
-                        p.get("key")
-                            .and_then(Value::as_str)
-                            .is_some_and(|k| k.eq_ignore_ascii_case(missing_prop))
-                    })
-                });
-            }
-
-            // Output
             if ids_only {
                 for obj in &results {
                     println!("{}", obj.id);
@@ -305,116 +256,19 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             Ok(())
         }
         ObjectsCommand::Count { space, group_by } => {
-            let id = resolve_space(client, &space).await?;
-            let req = SearchRequest {
-                query: String::new(),
-                types: Vec::new(),
-                filters: None,
-                sort: None,
-            };
-            let results = client.space_search_page(&id, &req, None).await?.data;
-
-            match group_by.as_deref() {
-                Some("type") => {
-                    let mut counts: std::collections::BTreeMap<String, usize> =
-                        std::collections::BTreeMap::new();
-                    for obj in &results {
-                        let type_name = obj
-                            .object_type
-                            .as_ref()
-                            .map(|t| {
-                                if t.key.is_empty() {
-                                    t.name.clone()
-                                } else {
-                                    t.key.clone()
-                                }
-                            })
-                            .unwrap_or_else(|| "(none)".to_string());
-                        *counts.entry(type_name).or_insert(0) += 1;
-                    }
-                    print_counts(&counts, results.len(), output)?;
-                }
-                Some(group) if group.starts_with("property:") => {
-                    let prop_key = &group["property:".len()..];
-                    let mut counts: std::collections::BTreeMap<String, usize> =
-                        std::collections::BTreeMap::new();
-                    let mut missing = 0usize;
-                    for obj in &results {
-                        let found = obj.properties.iter().find(|p| {
-                            p.get("key")
-                                .and_then(Value::as_str)
-                                .is_some_and(|k| k.eq_ignore_ascii_case(prop_key))
-                        });
-                        match found {
-                            None => missing += 1,
-                            Some(prop) => {
-                                let val = display_property_value(prop);
-                                if val.is_empty() {
-                                    *counts.entry("(empty)".to_string()).or_insert(0) += 1;
-                                } else {
-                                    *counts.entry(val).or_insert(0) += 1;
-                                }
-                            }
-                        }
-                    }
-                    if missing > 0 {
-                        counts.insert("(missing)".to_string(), missing);
-                    }
-                    print_counts(&counts, results.len(), output)?;
-                }
-                Some(other) => {
-                    return Err(anyhow!(
-                        "invalid --group-by: '{other}'. Use 'type' or 'property:<key>'"
-                    ));
-                }
-                None => {
-                    let total = results.len();
-                    match output {
-                        OutputFormat::Json => println!("{{\"total\": {total}}}"),
-                        OutputFormat::Yaml => println!("total: {total}"),
-                        OutputFormat::Table => println!("{total}"),
-                    }
+            match objects::count_objects(client, space, group_by).await? {
+                ObjectCountResult::Total(total) => match output {
+                    OutputFormat::Json => println!("{{\"total\": {total}}}"),
+                    OutputFormat::Yaml => println!("total: {total}"),
+                    OutputFormat::Table => println!("{total}"),
+                },
+                ObjectCountResult::Grouped { counts, total } => {
+                    print_counts(&counts, total, output)?;
                 }
             }
             Ok(())
         }
     }
-}
-
-/// Format a property value for human-readable display.
-fn display_property_value(prop: &Value) -> String {
-    for key in ["text", "url", "email", "phone"] {
-        if let Some(val) = prop.get(key).and_then(Value::as_str) {
-            return val.to_string();
-        }
-    }
-    if let Some(val) = prop.get("number") {
-        return val.to_string();
-    }
-    if let Some(val) = prop.get("select").and_then(Value::as_str) {
-        return val.to_string();
-    }
-    if let Some(arr) = prop.get("multi_select").and_then(Value::as_array) {
-        let names: Vec<String> = arr
-            .iter()
-            .map(|v| {
-                v.get("name")
-                    .and_then(Value::as_str)
-                    .or_else(|| v.as_str())
-                    .unwrap_or("?")
-                    .to_string()
-            })
-            .collect();
-        return names.join(", ");
-    }
-    if let Some(val) = prop.get("checkbox").and_then(Value::as_bool) {
-        return val.to_string();
-    }
-    if let Some(val) = prop.get("date").and_then(Value::as_str) {
-        return val.to_string();
-    }
-    // fallback: raw JSON
-    serde_json::to_string(prop).unwrap_or_default()
 }
 
 /// Print grouped counts respecting output format.
@@ -618,26 +472,4 @@ async fn get_object_tag_ids(
                 .collect()
         })
         .unwrap_or_default())
-}
-
-/// Check if a property value matches the target string.
-fn property_matches_value(prop: &Value, target: &str) -> bool {
-    // Try common value fields
-    for key in ["text", "number", "select", "url", "email", "phone"] {
-        if let Some(val) = prop.get(key) {
-            if val.as_str().is_some_and(|s| s.eq_ignore_ascii_case(target)) {
-                return true;
-            }
-            if val.as_f64().is_some_and(|n| n.to_string() == target) {
-                return true;
-            }
-        }
-    }
-    // checkbox
-    if let Some(val) = prop.get("checkbox")
-        && val.as_bool().is_some_and(|b| b.to_string() == target)
-    {
-        return true;
-    }
-    false
 }
