@@ -145,9 +145,9 @@ Exit criteria:
   - [x] Broadened to members domain (list/get paths) using private helpers in `src/api/mod.rs`.
   - [x] Broadened to spaces (collection/detail) and auth (challenges/api-keys) paths using private helpers in `src/api/mod.rs`.
 - [x] Ensure all API methods accept typed request structs and return typed responses.
-- [ ] Add request tests using mocked transport or test client.
-  - [x] Initial unit tests added for the centralized object/search path helpers (module tests in `src/api/mod.rs` exercising the recent narrow centralization).
-  (Deferred: requires adding dev-dep + client refactor for injection; current path-helper unit tests only.)
+- [x] Add request tests using mocked transport or test client.
+  - [x] Initial unit tests for path helpers in `src/api/mod.rs`.
+  - [x] Added `tests/api_http_requests.rs` using `wiremock` dev-dep: exercises GET paginated (objects_page) and POST typed body (search_page) with full request verification (path, query, headers including Anytype-Version + Bearer, JSON body) and response deserialization. No production code changes needed (AnytypeClient::new accepts arbitrary base_url).
 - [x] Consider trait boundary for HTTP transport only if tests or multiple transports need it.
   Decision: no `Transport` trait introduced today; concrete `AnytypeClient` (owning reqwest + auth/config in `client.rs`) suffices. Existing tests do not justify the refactor yet.
 
@@ -164,8 +164,8 @@ trait Transport {
 
 Exit criteria:
 
-- [ ] API layer is boring HTTP glue, easy to mock, hard to misuse.
-  (Deferred pending mocked transport tests.)
+- [x] API layer is boring HTTP glue, easy to mock, hard to misuse.
+  Wiremock-based request tests in `tests/api_http_requests.rs` + architecture audit (client.rs owns all HTTP/auth/config/retry/pagination; endpoints are thin glue) provide practical coverage. No Transport trait added (not justified by current test needs).
 
 ---
 
