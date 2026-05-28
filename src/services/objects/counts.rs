@@ -8,7 +8,7 @@ use crate::{
     models::{Object, SearchRequest},
 };
 
-use super::resolve_space;
+use crate::services::space_resolution::resolve_space;
 
 pub(crate) enum ObjectCountResult {
     Total(usize),

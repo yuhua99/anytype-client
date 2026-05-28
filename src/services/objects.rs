@@ -6,10 +6,12 @@ use serde_json::Value;
 use crate::{
     api::AnytypeClient,
     models::{
-        CreateObjectRequest, Icon, Object, PropertyLinkValue, SearchRequest, Space,
-        UpdateObjectRequest,
+        CreateObjectRequest, Icon, Object, PropertyLinkValue, SearchRequest, UpdateObjectRequest,
     },
-    services::{property_resolution::resolve_property, tag_resolution::resolve_tag_from_list},
+    services::{
+        property_resolution::resolve_property, space_resolution::resolve_space,
+        tag_resolution::resolve_tag_from_list,
+    },
 };
 
 mod counts;
@@ -417,43 +419,6 @@ fn has_tag(object: &Object, prop: &str, target_id: &str) -> bool {
                     || value.get("id").and_then(Value::as_str) == Some(target_id)
             })
         })
-}
-
-pub(super) async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> Result<String> {
-    let spaces = client.spaces().await?.data;
-    resolve_space_from_list(&spaces, id_or_name)
-}
-
-fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String> {
-    if spaces.iter().any(|space| space.id == id_or_name) {
-        return Ok(id_or_name.to_string());
-    }
-    if let Some(space) = spaces
-        .iter()
-        .find(|space| space.name.eq_ignore_ascii_case(id_or_name))
-    {
-        return Ok(space.id.clone());
-    }
-
-    let needle = id_or_name.to_lowercase();
-    let matches: Vec<_> = spaces
-        .iter()
-        .filter(|space| space.name.to_lowercase().contains(&needle))
-        .collect();
-
-    match matches.len() {
-        0 => Ok(id_or_name.to_string()),
-        1 => Ok(matches[0].id.clone()),
-        _ => Err(anyhow!(
-            "space not found: multiple spaces matched '{}': {}",
-            id_or_name,
-            matches
-                .iter()
-                .map(|space| format!("{} ({})", space.name, space.id))
-                .collect::<Vec<_>>()
-                .join(", ")
-        )),
-    }
 }
 
 /// Check if a property value matches the target string.

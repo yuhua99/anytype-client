@@ -6,4 +6,5 @@
 pub mod objects;
 pub(crate) mod property_resolution;
 pub mod search;
+pub(crate) mod space_resolution;
 pub(crate) mod tag_resolution;

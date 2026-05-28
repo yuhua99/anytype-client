@@ -16,8 +16,10 @@ use serde_json::Value;
 use crate::{
     api::{AnytypeClient, PageOptions},
     cli::{Command, IconArgs, OutputFormat, PageArgs, PropertyLinkArgs, PropertyValueArgs},
-    models::{Icon, PropertyLink, PropertyLinkValue, Space},
+    models::{Icon, PropertyLink, PropertyLinkValue},
 };
+
+pub(crate) use crate::services::space_resolution::resolve_space;
 
 pub use auth::auth_command;
 
@@ -169,41 +171,4 @@ fn parse_json_value<T: DeserializeOwned>(value: Value, arg: &str) -> Result<T> {
 
 fn parse_json(input: &str, arg: &str) -> Result<Value> {
     serde_json::from_str(input).map_err(|err| anyhow!("invalid JSON for {arg}: {err}"))
-}
-
-async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> Result<String> {
-    let spaces = client.spaces().await?.data;
-    resolve_space_from_list(&spaces, id_or_name)
-}
-
-fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String> {
-    if spaces.iter().any(|space| space.id == id_or_name) {
-        return Ok(id_or_name.to_string());
-    }
-    if let Some(space) = spaces
-        .iter()
-        .find(|space| space.name.eq_ignore_ascii_case(id_or_name))
-    {
-        return Ok(space.id.clone());
-    }
-
-    let needle = id_or_name.to_lowercase();
-    let matches: Vec<_> = spaces
-        .iter()
-        .filter(|space| space.name.to_lowercase().contains(&needle))
-        .collect();
-
-    match matches.len() {
-        0 => Ok(id_or_name.to_string()),
-        1 => Ok(matches[0].id.clone()),
-        _ => Err(anyhow!(
-            "space not found: multiple spaces matched '{}': {}",
-            id_or_name,
-            matches
-                .iter()
-                .map(|s| format!("{} ({})", s.name, s.id))
-                .collect::<Vec<_>>()
-                .join(", ")
-        )),
-    }
 }

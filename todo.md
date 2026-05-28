@@ -64,7 +64,8 @@ Tasks:
     - [x] Move target object ID loading.
     - [x] Move per-object update planning/execution.
   - [x] Move create/update request construction.
-- [x] Move property/tag resolution into domain modules:
+- [x] Move space/property/tag resolution into domain modules:
+  - [x] `services/space_resolution.rs`
   - [x] `services/property_resolution.rs`
   - [x] `services/tag_resolution.rs`
 - [ ] Keep `commands/*` limited to:
