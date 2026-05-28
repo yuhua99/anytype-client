@@ -139,6 +139,7 @@ Exit criteria:
   - [x] Initial narrow slice: object and search endpoint paths centralized as private helpers in `src/api/mod.rs`.
 - [x] Ensure all API methods accept typed request structs and return typed responses.
 - [ ] Add request tests using mocked transport or test client.
+  - [x] Initial unit tests added for the centralized object/search path helpers (module tests in `src/api/mod.rs` exercising the recent narrow centralization).
 - [ ] Consider trait boundary for HTTP transport only if tests or multiple transports need it:
 
 ```rust
