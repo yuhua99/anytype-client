@@ -12,7 +12,7 @@ Anytype can expose its API in two different setups, so anyclient supports two au
 
 - `anyclient auth desktop` — For the regular Anytype desktop application, which includes a built-in Local API (defaults to http://127.0.0.1:31009). The app will show a challenge code for you to confirm.
 
-- `anyclient auth headless` — For https://github.com/anyproto/anytype-cli when running it as a headless Anytype server (API defaults to http://127.0.0.1:31012).
+- `anyclient auth headless` — For [anytype-cli](https://github.com/anyproto/anytype-cli) when running it as a headless Anytype server (API defaults to http://127.0.0.1:31012).
 
 Override the server address with `--base-url` or the `ANYTYPE_BASE_URL` environment variable. Provide an API key with `--api-key` / `ANYTYPE_API_KEY` or store it in the config file.
 
@@ -48,8 +48,7 @@ bunx skills add git@github.com:yuhua99/anytype-client.git
 ## Compatibility
 
 anyclient works with:
-- The standard Anytype desktop application, or
-- The official https://github.com/anyproto/anytype-cli (when configured to provide a headless Anytype instance).
+- The standard Anytype desktop application, or [anytype-cli](https://github.com/anyproto/anytype-cli)
 
 ## Configuration
 
