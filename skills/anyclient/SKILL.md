@@ -1,3 +1,8 @@
+---
+name: anyclient
+description: Use for Anytype object management, note access, searches with typed filters, property/tag updates, file uploads, bulk operations, and scripting via anyclient. Use this when the user wants to access their notes.
+---
+
 # anyclient
 
 CLI for Anytype.
@@ -11,7 +16,7 @@ CLI for Anytype.
 
 ### Create task with properties + tags
 ```bash
-anyclient objects create <space> --name "Fix login" --type task \
+anyclient objects create <space> --name "Buy groceries" --type task \
   --property '{"key":"status","select":"<tag-id>"}' \
   --tag-add <tag-id>
 ```
