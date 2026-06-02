@@ -21,6 +21,9 @@ pub struct ObjectType {
     pub plural_name: String,
     #[serde(default, alias = "Description")]
     pub description: String,
+    #[serde(default, alias = "defaultTemplateId", alias = "default_template_id")]
+    #[tabled(skip)]
+    pub default_template_id: Option<String>,
     #[serde(default, alias = "is_archived")]
     pub archived: bool,
     #[serde(default, alias = "is_hidden")]

@@ -10,7 +10,7 @@ use crate::{
     },
     services::{
         property_resolution::resolve_property, space_resolution::resolve_space,
-        tag_resolution::resolve_tag_from_list,
+        tag_resolution::resolve_tag_from_list, type_resolution::resolve_default_template_for_type,
     },
 };
 
@@ -84,10 +84,15 @@ pub(crate) async fn create_object(
     params: CreateObjectParams,
 ) -> Result<Object> {
     let space_id = resolve_space(client, &params.space).await?;
+    let template_id = if let Some(id) = params.template_id {
+        Some(id)
+    } else {
+        resolve_default_template_for_type(client, &space_id, &params.type_key).await?
+    };
     let req = CreateObjectRequest::new(params.type_key, params.name)
         .with_body(params.body)
         .with_icon(params.icon)
-        .with_template_id(params.template_id)
+        .with_template_id(template_id)
         .with_properties(params.properties);
     Ok(client.create_object(&space_id, &req).await?.object)
 }

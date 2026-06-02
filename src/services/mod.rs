@@ -8,3 +8,4 @@ pub(crate) mod property_resolution;
 pub(crate) mod search;
 pub(crate) mod space_resolution;
 pub(crate) mod tag_resolution;
+pub(crate) mod type_resolution;

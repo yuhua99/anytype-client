@@ -103,6 +103,7 @@ fn round_trips_type_and_list_models() {
         layout: ObjectLayout::Basic,
         plural_name: "Tasks".into(),
         description: "Things to do".into(),
+        default_template_id: None,
         archived: false,
         is_hidden: false,
         property_definitions: vec![json!({"key":"status"})],

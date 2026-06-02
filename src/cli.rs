@@ -262,7 +262,7 @@ pub enum ObjectsCommand {
     /// Find objects with simplified filters.
     Find {
         space: String,
-        /// Filter by type key/name.
+        /// Filter by type key.
         #[arg(long)]
         r#type: Option<String>,
         /// Filter by tag name/key/id (requires --tag-property).

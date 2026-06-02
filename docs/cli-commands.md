@@ -40,26 +40,30 @@ anyclient spaces update SPACE [--name NAME] [--description DESC]
 anyclient objects list SPACE [--limit N] [--offset N]
 anyclient objects get SPACE OBJECT_ID [--format md]
 anyclient objects create SPACE --name NAME [--type TYPE] [--body BODY] [--template TEMPLATE] [ICON] [PROPERTIES]
-
-Example:
-```bash
-anyclient objects create space-id --name "My Task" --type task \
-  --property '{"key":"status","text":"done"}' \
-  --property '{"key":"tags","multi_select":["tag1","tag2"]}' -o json
-```
 anyclient objects update SPACE OBJECT_ID [--name NAME] [--type TYPE] [--markdown BODY] [ICON] [PROPERTIES] [--tag-property PROP --tag-add TAG --tag-remove TAG]
-
-Example (properties + tags):
-```bash
-anyclient objects update space-id obj-id --name Updated \
-  --tag-property status --tag-add done \
-  --property '{"key":"title","text":"foo"}' -o json
-```
 anyclient objects delete SPACE OBJECT_ID
 anyclient objects export SPACE OBJECT_ID [--format md]
 anyclient objects update-many SPACE [--ids-file PATH] [--ids ID1,ID2] [--query QUERY] [--types TYPE1,TYPE2] [--tag-property PROP] [--tag-add TAG] [--tag-remove TAG] [--dry-run]
 anyclient objects find SPACE [--type TYPE] [--tag TAG --tag-property PROP] [--property KEY=VALUE] [--name TEXT] [--missing-property PROP] [--ids-only] [--names-only]
 anyclient objects count SPACE [--group-by type|property:KEY]
+```
+
+Note: `--type` expects a type *key* (not display name). Use `anyclient types list <space>` to discover available keys.
+
+Example:
+
+```bash
+anyclient objects create space-id --name "My Task" --type task \
+  --property '{"key":"status","text":"done"}' \
+  --property '{"key":"tags","multi_select":["tag1","tag2"]}' -o json
+```
+
+Example (properties + tags):
+
+```bash
+anyclient objects update space-id obj-id --name Updated \
+  --tag-property status --tag-add done \
+  --property '{"key":"title","text":"foo"}' -o json
 ```
 
 ## Search
