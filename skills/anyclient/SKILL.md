@@ -14,22 +14,25 @@ CLI for Anytype.
 
 ## Common workflows
 
-### Create task with properties + tags
+### Create task with properties (tags via multi_select)
 ```bash
 anyclient objects create <space> --name "Buy groceries" --type task \
   --property '{"key":"status","select":"<tag-id>"}' \
-  --tag-add <tag-id>
+  --property '{"key":"tags","multi_select":["<tag-id>"]}'
 ```
+`--tag-add`/`--tag-remove` only exist on `objects update` and `objects update-many`.
 
 ### Search with typed filter
 ```bash
 anyclient search --space <space> --filters '{"operator":"and","conditions":[{"property_key":"status","condition":"eq","select":"done"}]}' -o json
 ```
 
-### Bulk update (by query or IDs)
+### Bulk tag update (by query or IDs)
 ```bash
-anyclient objects update-many <space> --query "status:doing" \
-  --property '{"key":"status","select":"<done>"}'
+# --query is a full-text search string (not key:value syntax);
+# update-many only supports tag add/remove, not --property.
+anyclient objects update-many <space> --query "groceries" --types task \
+  --tag-property "Tags" --tag-add <done> --dry-run
 
 anyclient objects update-many <space> --ids-file ids.txt \
   --tag-property "Tags" --tag-add <urgent>
@@ -37,13 +40,13 @@ anyclient objects update-many <space> --ids-file ids.txt \
 
 ### Upload file then attach
 ```bash
-FILE=$(anyclient files upload <space> design.png -o json | jq -r '.id')
+FILE=$(anyclient files upload <space> design.png -o json | jq -r '.object_id')
 anyclient objects update <space> <obj> --property "{\"key\":\"attachments\",\"files\":[\"$FILE\"]}"
 ```
 
 ### Get IDs only (scripting)
 ```bash
-anyclient objects find <space> --type task --tag "urgent" --ids-only
+anyclient objects find <space> --type task --tag "urgent" --tag-property "Tags" --ids-only
 ```
 
 ### Count grouped by property
