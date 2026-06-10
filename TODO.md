@@ -22,7 +22,7 @@
 
 ## Medium priority
 
-- [ ] 5. Print a stderr notice when fuzzy (substring) resolution picks a
+- [x] 5. Print a stderr notice when fuzzy (substring) resolution picks a
       space/property/tag, so destructive commands are not silently redirected.
 - [ ] 6. Skip the full `GET /spaces` round-trip when the input resolves
       directly as a space ID.
@@ -37,7 +37,7 @@
 
 ## Testing gaps
 
-- [ ] T1. Unit tests for resolution logic (space/property/tag): exact-vs-fuzzy
+- [x] T1. Unit tests for resolution logic (space/property/tag): exact-vs-fuzzy
       precedence, ambiguity errors.
 - [x] T2. Tag merge semantics tests (add/remove/idempotency, key≠name case).
 - [ ] T3. Wiremock test for the auto-pagination loop (multi-page accumulation

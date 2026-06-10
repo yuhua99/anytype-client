@@ -1,21 +1,34 @@
 use anyhow::{Result, anyhow};
 
-use crate::{api::AnytypeClient, models::Space};
+use crate::{api::AnytypeClient, models::Space, output::eprint_status, services::Match};
 
 pub(crate) async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> Result<String> {
     let spaces = client.spaces().await?.data;
-    resolve_space_from_list(&spaces, id_or_name)
+    match resolve_space_from_list(&spaces, id_or_name)? {
+        Match::Exact(space_id) => Ok(space_id),
+        Match::Fuzzy(space_id) => {
+            let name = spaces
+                .iter()
+                .find(|space| space.id == space_id)
+                .map(|space| space.name.as_str())
+                .unwrap_or_default();
+            eprint_status(format!(
+                "note: resolved space '{id_or_name}' by partial match to '{name}' ({space_id})"
+            ));
+            Ok(space_id)
+        }
+    }
 }
 
-fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String> {
+fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<Match<String>> {
     if spaces.iter().any(|space| space.id == id_or_name) {
-        return Ok(id_or_name.to_string());
+        return Ok(Match::Exact(id_or_name.to_string()));
     }
     if let Some(space) = spaces
         .iter()
         .find(|space| space.name.eq_ignore_ascii_case(id_or_name))
     {
-        return Ok(space.id.clone());
+        return Ok(Match::Exact(space.id.clone()));
     }
 
     let needle = id_or_name.to_lowercase();
@@ -29,7 +42,7 @@ fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String>
             "space not found: '{}' (use exact ID or name; partial matches: none)",
             id_or_name
         )),
-        1 => Ok(matches[0].id.clone()),
+        1 => Ok(Match::Fuzzy(matches[0].id.clone())),
         _ => Err(anyhow!(
             "space not found: multiple spaces matched '{}': {}",
             id_or_name,
@@ -39,5 +52,63 @@ fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<String>
                 .collect::<Vec<_>>()
                 .join(", ")
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn space(id: &str, name: &str) -> Space {
+        Space {
+            id: id.into(),
+            name: name.into(),
+            description: String::new(),
+            home_id: None,
+            icon: None,
+            extra: Default::default(),
+        }
+    }
+
+    #[test]
+    fn exact_id_and_name_win_over_fuzzy() {
+        let spaces = vec![space("s1", "Work"), space("s2", "Workshop")];
+
+        assert!(matches!(
+            resolve_space_from_list(&spaces, "s1").unwrap(),
+            Match::Exact(id) if id == "s1"
+        ));
+        assert!(matches!(
+            resolve_space_from_list(&spaces, "work").unwrap(),
+            Match::Exact(id) if id == "s1"
+        ));
+    }
+
+    #[test]
+    fn unique_partial_match_is_fuzzy() {
+        let spaces = vec![space("s1", "Work"), space("s2", "Archive")];
+
+        assert!(matches!(
+            resolve_space_from_list(&spaces, "arch").unwrap(),
+            Match::Fuzzy(id) if id == "s2"
+        ));
+    }
+
+    #[test]
+    fn errors_on_no_match_and_ambiguity() {
+        let spaces = vec![space("s1", "Work"), space("s2", "Workshop")];
+
+        assert!(
+            resolve_space_from_list(&spaces, "missing")
+                .unwrap_err()
+                .to_string()
+                .contains("space not found")
+        );
+        assert!(
+            resolve_space_from_list(&spaces, "wor")
+                .unwrap_err()
+                .to_string()
+                .contains("multiple spaces matched")
+        );
     }
 }
