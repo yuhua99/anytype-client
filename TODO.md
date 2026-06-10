@@ -43,6 +43,6 @@
 - [x] T3. Wiremock test for the auto-pagination loop (multi-page accumulation
       and stall guard).
 - [x] T4. Response-decoding fixtures with unknown layout/format/color values.
-- [ ] T5. Tests for count grouping helpers (`count_by_property`,
+- [x] T5. Tests for count grouping helpers (`count_by_property`,
       `display_property_value`, missing/empty buckets).
 - [ ] T6. Config load/save round-trip test, including the `app_key` alias.

@@ -177,6 +177,66 @@ mod tests {
             .await;
     }
 
+    fn object_with_properties(id: &str, properties: Vec<Value>) -> Object {
+        serde_json::from_value(json!({
+            "id": id,
+            "name": id,
+            "space_id": "s1",
+            "layout": "basic",
+            "properties": properties
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn counts_by_property_with_missing_and_empty_buckets() {
+        let objects = vec![
+            object_with_properties("o1", vec![json!({"key": "status", "select": "done"})]),
+            object_with_properties("o2", vec![json!({"key": "status", "select": "done"})]),
+            object_with_properties("o3", vec![json!({"key": "status", "text": ""})]),
+            object_with_properties("o4", vec![json!({"key": "other", "text": "x"})]),
+        ];
+
+        let counts = count_by_property(&objects, "status");
+
+        assert_eq!(counts["done"], 2);
+        assert_eq!(counts["(empty)"], 1);
+        assert_eq!(counts["(missing)"], 1);
+    }
+
+    #[test]
+    fn counts_by_type_prefers_key_and_buckets_untyped() {
+        let typed: Object = serde_json::from_value(json!({
+            "id": "o1",
+            "name": "o1",
+            "space_id": "s1",
+            "layout": "basic",
+            "type": {"id": "t1", "key": "task", "name": "Task"}
+        }))
+        .unwrap();
+        let untyped = object_with_properties("o2", Vec::new());
+
+        let counts = count_by_type(&[typed, untyped]);
+
+        assert_eq!(counts["task"], 1);
+        assert_eq!(counts["(none)"], 1);
+    }
+
+    #[test]
+    fn displays_property_values_per_format() {
+        assert_eq!(display_property_value(&json!({"text": "foo"})), "foo");
+        assert_eq!(display_property_value(&json!({"number": 4.5})), "4.5");
+        assert_eq!(display_property_value(&json!({"checkbox": true})), "true");
+        assert_eq!(
+            display_property_value(&json!({"multi_select": [{"name": "A"}, "B"]})),
+            "A, B"
+        );
+        assert_eq!(
+            display_property_value(&json!({"date": "2024-01-01"})),
+            "2024-01-01"
+        );
+    }
+
     #[tokio::test]
     async fn ungrouped_count_uses_pagination_total() {
         let server = MockServer::start().await;
