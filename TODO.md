@@ -28,7 +28,7 @@
       directly as a space ID.
 - [x] 7. Deduplicate the page-limit constant (commands hardcodes 1000, api has
       `PAGE_LIMIT`); drop redundant comma re-splitting in `load_object_ids`.
-- [ ] 8. Replace `unreachable!()` for `Command::Auth` in `run_command` with an
+- [x] 8. Replace `unreachable!()` for `Command::Auth` in `run_command` with an
       error.
 - [ ] 9. (Deferred) Verify speculative serde aliases (`"ID"`, `"Name"`,
       `"defaultTemplateId"`, …) against the pinned `Anytype-Version` on a live

@@ -37,7 +37,9 @@ pub async fn run_command(
         Command::Files(args) => files::run(&client, args, &output).await,
         Command::Collections(args) => collections::run(&client, args, &output).await,
         Command::Members(args) => members::run(&client, args, &output).await,
-        Command::Auth(_) => unreachable!(),
+        Command::Auth(_) => Err(anyhow!(
+            "auth commands are dispatched before client construction; this is a bug"
+        )),
     }
 }
 
