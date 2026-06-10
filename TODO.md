@@ -12,7 +12,7 @@
       `key` and the write uses the raw user string as `key`. Passing a display
       name reads current tags as empty and `--tag-add` replaces/wipes them.
       Resolve to the canonical property key once and use it everywhere.
-- [ ] 3. Include operation (method + path) in HTTP error messages.
+- [x] 3. Include operation (method + path) in HTTP error messages.
       `decode_response` errors reference "caller context" that no caller adds.
 - [ ] 4. Move `objects find` filtering server-side via typed `FilterExpression`
       (tag, property, missing-property); make `--name` behave as documented

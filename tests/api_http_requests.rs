@@ -55,6 +55,28 @@ async fn objects_page_sends_correct_request_and_deserializes() {
 }
 
 #[tokio::test]
+async fn http_error_includes_method_and_path() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/v1/spaces/spc_404/objects/obj_404"))
+        .respond_with(ResponseTemplate::new(404).set_body_json(json!({"error":"not found"})))
+        .mount(&server)
+        .await;
+
+    let client = AnytypeClient::new(server.uri(), Some("key".to_string())).unwrap();
+    let err = client
+        .object("spc_404", "obj_404", None)
+        .await
+        .unwrap_err()
+        .to_string();
+
+    assert!(err.contains("GET /spaces/spc_404/objects/obj_404"), "{err}");
+    assert!(err.contains("404"), "{err}");
+    assert!(err.contains("not found"), "{err}");
+}
+
+#[tokio::test]
 async fn search_page_sends_typed_body_and_deserializes() {
     let server = MockServer::start().await;
     let api_key = "test-api-key-abc";

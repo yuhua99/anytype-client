@@ -49,7 +49,7 @@ impl AnytypeClient {
             .send()
             .await
             .with_context(|| format!("failed to send {op}"))?;
-        self.decode_response(resp).await
+        self.decode_response(resp, &op).await
     }
 
     pub(super) async fn request_empty<B: Serialize + ?Sized>(
@@ -83,13 +83,14 @@ impl AnytypeClient {
         path: &str,
         form: Form,
     ) -> Result<T> {
+        let op = format!("POST multipart {path}");
         let resp = self
             .authed(Method::POST, path)
             .multipart(form)
             .send()
             .await
-            .with_context(|| format!("failed to send POST multipart to {path}"))?;
-        self.decode_response(resp).await
+            .with_context(|| format!("failed to send {op}"))?;
+        self.decode_response(resp, &op).await
     }
 
     pub(super) async fn request_bytes(&self, method: Method, path: &str) -> Result<Vec<u8>> {
@@ -177,20 +178,24 @@ impl AnytypeClient {
         }
     }
 
-    async fn decode_response<T: DeserializeOwned>(&self, resp: reqwest::Response) -> Result<T> {
+    async fn decode_response<T: DeserializeOwned>(
+        &self,
+        resp: reqwest::Response,
+        op: &str,
+    ) -> Result<T> {
         let status = resp.status();
         let text = resp
             .text()
             .await
-            .with_context(|| "failed to read response body")?;
+            .with_context(|| format!("failed to read response body for {op}"))?;
         if !status.is_success() {
-            return Err(anyhow!("request failed with status {status}: {text}"))
-                .context("see caller context for operation details");
+            return Err(anyhow!("{op} failed with status {status}: {text}"));
         }
         if status == StatusCode::NO_CONTENT || text.trim().is_empty() {
             return serde_json::from_str("null").map_err(Into::into);
         }
-        serde_json::from_str(&text).with_context(|| format!("failed to decode response: {text}"))
+        serde_json::from_str(&text)
+            .with_context(|| format!("failed to decode response for {op}: {text}"))
     }
 
     fn authed(&self, method: Method, path: &str) -> reqwest::RequestBuilder {
