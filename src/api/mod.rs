@@ -10,6 +10,7 @@ mod spaces;
 mod tags;
 mod types;
 
+pub(crate) use client::PAGE_LIMIT;
 pub use client::{AnytypeClient, PageOptions};
 
 // Centralized API endpoint path builders.

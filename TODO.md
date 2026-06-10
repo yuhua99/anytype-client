@@ -26,7 +26,7 @@
       space/property/tag, so destructive commands are not silently redirected.
 - [x] 6. Skip the full `GET /spaces` round-trip when the input resolves
       directly as a space ID.
-- [ ] 7. Deduplicate the page-limit constant (commands hardcodes 1000, api has
+- [x] 7. Deduplicate the page-limit constant (commands hardcodes 1000, api has
       `PAGE_LIMIT`); drop redundant comma re-splitting in `load_object_ids`.
 - [ ] 8. Replace `unreachable!()` for `Command::Auth` in `run_command` with an
       error.

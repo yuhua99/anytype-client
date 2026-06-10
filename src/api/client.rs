@@ -7,7 +7,9 @@ use url::Url;
 
 use crate::{ANYTYPE_VERSION, models::DataResponse};
 
-const PAGE_LIMIT: i64 = 1000;
+/// Maximum page size accepted by the API; also the page size used when
+/// auto-paginating through all results.
+pub(crate) const PAGE_LIMIT: i64 = 1000;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PageOptions {

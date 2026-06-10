@@ -12,7 +12,7 @@ mod tags;
 mod types;
 
 use crate::{
-    api::{AnytypeClient, PageOptions},
+    api::{AnytypeClient, PAGE_LIMIT, PageOptions},
     cli::{Command, IconArgs, OutputFormat, PageArgs},
     models::Icon,
 };
@@ -45,8 +45,8 @@ fn page_options(args: PageArgs) -> Result<Option<PageOptions>> {
     let Some(limit) = args.limit else {
         return Ok(None);
     };
-    if limit <= 0 || limit > 1000 {
-        return Err(anyhow!("--limit must be between 1 and 1000"));
+    if limit <= 0 || limit > PAGE_LIMIT {
+        return Err(anyhow!("--limit must be between 1 and {PAGE_LIMIT}"));
     }
     if args.offset < 0 {
         return Err(anyhow!("--offset must be >= 0"));
