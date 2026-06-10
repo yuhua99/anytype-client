@@ -16,18 +16,10 @@ use crate::{
 };
 
 mod counts;
+mod find;
 
 pub(crate) use counts::{ObjectCountResult, count_objects};
-
-pub(crate) struct FindObjectsParams {
-    pub space: String,
-    pub type_key: Option<String>,
-    pub tag: Option<String>,
-    pub tag_property: Option<String>,
-    pub property: Option<String>,
-    pub name: Option<String>,
-    pub missing_property: Option<String>,
-}
+pub(crate) use find::{FindObjectsParams, find_objects};
 
 pub(crate) struct CreateObjectParams {
     pub space: String,
@@ -132,56 +124,6 @@ pub(crate) async fn update_object(
         .update_object(&space_id, &params.object_id, &req)
         .await?
         .object)
-}
-
-pub(crate) async fn find_objects(
-    client: &AnytypeClient,
-    params: FindObjectsParams,
-) -> Result<Vec<Object>> {
-    let space_id = resolve_space(client, &params.space).await?;
-    let search_types = params
-        .type_key
-        .as_ref()
-        .map(|r#type| vec![r#type.clone()])
-        .unwrap_or_default();
-    let req = SearchRequest::new(params.name.clone().unwrap_or_default()).with_types(search_types);
-    let mut results = client.space_search_page(&space_id, &req, None).await?.data;
-
-    if let Some(tag_name) = &params.tag {
-        let prop = params
-            .tag_property
-            .as_deref()
-            .ok_or_else(|| anyhow!("--tag-property is required when using --tag"))?;
-        let property = resolve_property(client, &space_id, prop).await?;
-        let all_tags = client.tags(&space_id, &property.id).await?.data;
-        let target_id = resolve_tag_from_list(&all_tags, tag_name)?;
-        results.retain(|obj| has_tag(obj, &property.key, &target_id));
-    }
-
-    if let Some(prop_expr) = &params.property {
-        let (key, value) = prop_expr
-            .split_once('=')
-            .ok_or_else(|| anyhow!("--property must be key=value"))?;
-        results.retain(|obj| {
-            obj.properties.iter().any(|property| {
-                property.get("key").and_then(Value::as_str) == Some(key)
-                    && property_matches_value(property, value)
-            })
-        });
-    }
-
-    if let Some(missing_prop) = &params.missing_property {
-        results.retain(|obj| {
-            !obj.properties.iter().any(|property| {
-                property
-                    .get("key")
-                    .and_then(Value::as_str)
-                    .is_some_and(|key| key.eq_ignore_ascii_case(missing_prop))
-            })
-        });
-    }
-
-    Ok(results)
 }
 
 /// Read current tags from object, merge add/remove, return final tag IDs.
@@ -396,54 +338,6 @@ pub(crate) async fn update_many_objects(
             matched: object_ids.len(),
         })
     }
-}
-
-fn has_tag(object: &Object, property_key: &str, target_id: &str) -> bool {
-    object
-        .properties
-        .iter()
-        .find(|property| {
-            property
-                .get("key")
-                .and_then(Value::as_str)
-                .is_some_and(|key| key.eq_ignore_ascii_case(property_key))
-        })
-        .and_then(|property| property.get("multi_select"))
-        .and_then(Value::as_array)
-        .is_some_and(|arr| {
-            arr.iter().any(|value| {
-                value.as_str() == Some(target_id)
-                    || value.get("id").and_then(Value::as_str) == Some(target_id)
-            })
-        })
-}
-
-/// Check if a property value matches the target string.
-fn property_matches_value(prop: &Value, target: &str) -> bool {
-    for key in ["text", "number", "select", "url", "email", "phone"] {
-        if let Some(value) = prop.get(key) {
-            if value
-                .as_str()
-                .is_some_and(|s| s.eq_ignore_ascii_case(target))
-            {
-                return true;
-            }
-            if value
-                .as_f64()
-                .is_some_and(|number| number.to_string() == target)
-            {
-                return true;
-            }
-        }
-    }
-    if let Some(value) = prop.get("checkbox")
-        && value
-            .as_bool()
-            .is_some_and(|boolean| boolean.to_string() == target)
-    {
-        return true;
-    }
-    false
 }
 
 #[cfg(test)]

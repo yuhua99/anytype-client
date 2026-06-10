@@ -14,10 +14,11 @@
       Resolve to the canonical property key once and use it everywhere.
 - [x] 3. Include operation (method + path) in HTTP error messages.
       `decode_response` errors reference "caller context" that no caller adds.
-- [ ] 4. Move `objects find` filtering server-side via typed `FilterExpression`
-      (tag, property, missing-property); make `--name` behave as documented
-      (substring on name). Use `pagination.total` for ungrouped `objects count`
-      instead of downloading every object.
+- [x] 4a. Move `objects find` filtering server-side via typed
+      `FilterExpression` (tag, property, missing-property); make `--name`
+      behave as documented (substring on name).
+- [ ] 4b. Use `pagination.total` for ungrouped `objects count` instead of
+      downloading every object.
 
 ## Medium priority
 
