@@ -3,11 +3,11 @@ use anyhow::Result;
 use crate::{
     api::AnytypeClient,
     cli::{OutputFormat, PropertiesArgs, PropertiesCommand},
-    models::{CreatePropertyRequest, CreateTagRequest, UpdatePropertyRequest},
+    models::{CreatePropertyRequest, UpdatePropertyRequest},
     output::{print_data, print_one},
 };
 
-use super::{page_options, property_values::parse_json_items, resolve_space};
+use super::{page_options, property_values::parse_create_tags, resolve_space};
 
 pub async fn run(
     client: &AnytypeClient,
@@ -39,12 +39,7 @@ pub async fn run(
                 key,
                 name,
                 format,
-                tags: parse_json_items::<CreateTagRequest>(
-                    tags,
-                    tags_json,
-                    "--tag",
-                    "--tags-json",
-                )?,
+                tags: parse_create_tags(tags, tags_json)?,
             };
             print_one(client.create_property(&id, &req).await?.property, output)
         }

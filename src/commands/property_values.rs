@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use crate::{
     cli::{PropertyLinkArgs, PropertyValueArgs},
-    models::{PropertyLink, PropertyLinkValue},
+    models::{CreateTagRequest, IconColor, PropertyFormat, PropertyLink, PropertyLinkValue},
 };
 
 pub(super) fn parse_property_values(args: PropertyValueArgs) -> Result<Vec<PropertyLinkValue>> {
@@ -17,15 +17,42 @@ pub(super) fn parse_property_values(args: PropertyValueArgs) -> Result<Vec<Prope
 }
 
 pub(super) fn parse_property_links(args: PropertyLinkArgs) -> Result<Vec<PropertyLink>> {
-    parse_json_items(
+    let links: Vec<PropertyLink> = parse_json_items(
         args.properties,
         args.properties_json,
         "--property",
         "--properties-json",
-    )
+    )?;
+    // The Unknown variants only exist to tolerate unknown values in API
+    // responses; user-supplied request JSON must stay strictly validated.
+    for link in &links {
+        if matches!(link.format, PropertyFormat::Unknown) {
+            return Err(anyhow!(
+                "invalid schema for --property: unrecognized format for key '{}'",
+                link.key
+            ));
+        }
+    }
+    Ok(links)
 }
 
-pub(super) fn parse_json_items<T: DeserializeOwned>(
+pub(super) fn parse_create_tags(
+    tags: Vec<String>,
+    tags_json: Option<String>,
+) -> Result<Vec<CreateTagRequest>> {
+    let tags: Vec<CreateTagRequest> = parse_json_items(tags, tags_json, "--tag", "--tags-json")?;
+    for tag in &tags {
+        if matches!(tag.color, IconColor::Unknown) {
+            return Err(anyhow!(
+                "invalid schema for --tag: unrecognized color for tag '{}'",
+                tag.name
+            ));
+        }
+    }
+    Ok(tags)
+}
+
+fn parse_json_items<T: DeserializeOwned>(
     items: Vec<String>,
     items_json: Option<String>,
     item_arg: &str,
@@ -100,6 +127,25 @@ mod tests {
         .unwrap_err();
 
         assert!(err.to_string().contains("--property must be a JSON object"));
+    }
+
+    #[test]
+    fn rejects_unknown_property_link_format() {
+        let err = parse_property_links(PropertyLinkArgs {
+            properties: vec![r#"{"key":"status","name":"Status","format":"hyperlink"}"#.into()],
+            properties_json: None,
+        })
+        .unwrap_err();
+
+        assert!(err.to_string().contains("unrecognized format"));
+    }
+
+    #[test]
+    fn rejects_unknown_tag_color() {
+        let err =
+            parse_create_tags(vec![r#"{"name":"Done","color":"neon"}"#.into()], None).unwrap_err();
+
+        assert!(err.to_string().contains("unrecognized color"));
     }
 
     #[test]
