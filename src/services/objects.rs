@@ -6,7 +6,8 @@ use serde_json::Value;
 use crate::{
     api::AnytypeClient,
     models::{
-        CreateObjectRequest, Icon, Object, PropertyLinkValue, SearchRequest, UpdateObjectRequest,
+        CreateObjectRequest, Icon, Object, Property, PropertyLinkValue, RawObjectProperty,
+        SearchRequest, Tag, UpdateObjectRequest,
     },
     services::{
         property_resolution::resolve_property, space_resolution::resolve_space,
@@ -113,17 +114,18 @@ pub(crate) async fn update_object(
         let prop_name = params.tag_property.as_deref().ok_or_else(|| {
             anyhow!("--tag-property is required when using --tag-add or --tag-remove")
         })?;
+        let property = resolve_property(client, &space_id, prop_name).await?;
         let tag_ids = resolve_tag_ids(
             client,
             &space_id,
             &params.object_id,
-            prop_name,
+            &property,
             &params.tag_add,
             &params.tag_remove,
         )
         .await?;
         req.properties
-            .push(PropertyLinkValue::multi_select(prop_name, tag_ids));
+            .push(PropertyLinkValue::multi_select(&property.key, tag_ids));
     }
 
     Ok(client
@@ -150,10 +152,10 @@ pub(crate) async fn find_objects(
             .tag_property
             .as_deref()
             .ok_or_else(|| anyhow!("--tag-property is required when using --tag"))?;
-        let prop_id = resolve_property(client, &space_id, prop).await?;
-        let all_tags = client.tags(&space_id, &prop_id).await?.data;
+        let property = resolve_property(client, &space_id, prop).await?;
+        let all_tags = client.tags(&space_id, &property.id).await?.data;
         let target_id = resolve_tag_from_list(&all_tags, tag_name)?;
-        results.retain(|obj| has_tag(obj, prop, &target_id));
+        results.retain(|obj| has_tag(obj, &property.key, &target_id));
     }
 
     if let Some(prop_expr) = &params.property {
@@ -183,50 +185,62 @@ pub(crate) async fn find_objects(
 }
 
 /// Read current tags from object, merge add/remove, return final tag IDs.
+/// `property` must be a resolved property; its canonical `key` is used to
+/// read the object's current tags and its `id` to list available tags.
 pub(crate) async fn resolve_tag_ids(
     client: &AnytypeClient,
     space_id: &str,
     object_id: &str,
-    property_name_or_key: &str,
+    property: &Property,
     add: &[String],
     remove: &[String],
 ) -> Result<Vec<String>> {
-    let prop_id = resolve_property(client, space_id, property_name_or_key).await?;
-    let all_tags = client.tags(space_id, &prop_id).await?.data;
+    let all_tags = client.tags(space_id, &property.id).await?.data;
+    let current = get_object_tag_ids(client, space_id, object_id, &property.key).await?;
+    merge_tag_ids(current, &all_tags, add, remove)
+}
 
-    let mut tag_ids = get_object_tag_ids(client, space_id, object_id, property_name_or_key).await?;
-
+/// Merge tag add/remove requests (by name/key/id) into the current tag IDs.
+fn merge_tag_ids(
+    mut tag_ids: Vec<String>,
+    all_tags: &[Tag],
+    add: &[String],
+    remove: &[String],
+) -> Result<Vec<String>> {
     for name in add {
-        let tag_id = resolve_tag_from_list(&all_tags, name)?;
+        let tag_id = resolve_tag_from_list(all_tags, name)?;
         if !tag_ids.contains(&tag_id) {
             tag_ids.push(tag_id);
         }
     }
 
     for name in remove {
-        let tag_id = resolve_tag_from_list(&all_tags, name)?;
+        let tag_id = resolve_tag_from_list(all_tags, name)?;
         tag_ids.retain(|id| id != &tag_id);
     }
 
     Ok(tag_ids)
 }
 
-/// Get current tag IDs from an object's multi-select property.
+/// Get current tag IDs from an object's multi-select property by canonical key.
 pub(crate) async fn get_object_tag_ids(
     client: &AnytypeClient,
     space_id: &str,
     object_id: &str,
-    property_name_or_key: &str,
+    property_key: &str,
 ) -> Result<Vec<String>> {
     let object = client.object(space_id, object_id, None).await?.object;
-    Ok(object
-        .properties
+    Ok(tag_ids_from_properties(&object.properties, property_key))
+}
+
+fn tag_ids_from_properties(properties: &[RawObjectProperty], property_key: &str) -> Vec<String> {
+    properties
         .iter()
         .find(|property| {
             property
                 .get("key")
                 .and_then(Value::as_str)
-                .is_some_and(|key| key.eq_ignore_ascii_case(property_name_or_key))
+                .is_some_and(|key| key.eq_ignore_ascii_case(property_key))
         })
         .and_then(|property| property.get("multi_select"))
         .and_then(Value::as_array)
@@ -240,7 +254,7 @@ pub(crate) async fn get_object_tag_ids(
                 })
                 .collect()
         })
-        .unwrap_or_default())
+        .unwrap_or_default()
 }
 
 /// Collect object IDs from --ids-file, --ids, or search query.
@@ -313,9 +327,13 @@ pub(crate) async fn update_many_objects(
         None
     };
 
-    let all_tags = if let Some(prop) = prop_name {
-        let property_id = resolve_property(client, &space_id, prop).await?;
-        client.tags(&space_id, &property_id).await?.data
+    let property = if let Some(prop) = prop_name {
+        Some(resolve_property(client, &space_id, prop).await?)
+    } else {
+        None
+    };
+    let all_tags = if let Some(property) = &property {
+        client.tags(&space_id, &property.id).await?.data
     } else {
         Vec::new()
     };
@@ -326,8 +344,8 @@ pub(crate) async fn update_many_objects(
         let mut req = UpdateObjectRequest::new();
         let mut changes = Vec::new();
 
-        if let Some(prop) = prop_name {
-            let current = get_object_tag_ids(client, &space_id, object_id, prop).await?;
+        if let Some(property) = &property {
+            let current = get_object_tag_ids(client, &space_id, object_id, &property.key).await?;
             let mut tag_ids = current.clone();
 
             for name in &params.tag_add {
@@ -347,7 +365,7 @@ pub(crate) async fn update_many_objects(
 
             if tag_ids != current {
                 req.properties
-                    .push(PropertyLinkValue::multi_select(prop, tag_ids));
+                    .push(PropertyLinkValue::multi_select(&property.key, tag_ids));
             }
         }
 
@@ -380,7 +398,7 @@ pub(crate) async fn update_many_objects(
     }
 }
 
-fn has_tag(object: &Object, prop: &str, target_id: &str) -> bool {
+fn has_tag(object: &Object, property_key: &str, target_id: &str) -> bool {
     object
         .properties
         .iter()
@@ -388,7 +406,7 @@ fn has_tag(object: &Object, prop: &str, target_id: &str) -> bool {
             property
                 .get("key")
                 .and_then(Value::as_str)
-                .is_some_and(|key| key.eq_ignore_ascii_case(prop))
+                .is_some_and(|key| key.eq_ignore_ascii_case(property_key))
         })
         .and_then(|property| property.get("multi_select"))
         .and_then(Value::as_array)
@@ -426,4 +444,68 @@ fn property_matches_value(prop: &Value, target: &str) -> bool {
         return true;
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::IconColor;
+    use serde_json::json;
+
+    fn tag(id: &str, key: &str, name: &str) -> Tag {
+        Tag {
+            id: id.into(),
+            key: key.into(),
+            name: name.into(),
+            color: IconColor::Yellow,
+            object: String::new(),
+            extra: Default::default(),
+        }
+    }
+
+    #[test]
+    fn merge_tag_ids_adds_removes_and_is_idempotent() {
+        let all_tags = vec![tag("id-a", "a", "Tag A"), tag("id-b", "b", "Tag B")];
+
+        let merged = merge_tag_ids(
+            vec!["id-a".into()],
+            &all_tags,
+            &["Tag B".into(), "Tag B".into(), "Tag A".into()],
+            &[],
+        )
+        .unwrap();
+        assert_eq!(merged, ["id-a", "id-b"]);
+
+        let merged = merge_tag_ids(
+            vec!["id-a".into(), "id-b".into()],
+            &all_tags,
+            &[],
+            &["b".into()],
+        )
+        .unwrap();
+        assert_eq!(merged, ["id-a"]);
+    }
+
+    #[test]
+    fn merge_tag_ids_errors_on_unknown_tag() {
+        let all_tags = vec![tag("id-a", "a", "Tag A")];
+        assert!(merge_tag_ids(Vec::new(), &all_tags, &["missing".into()], &[]).is_err());
+    }
+
+    #[test]
+    fn tag_ids_from_properties_matches_canonical_key_only() {
+        let properties = vec![json!({
+            "key": "tag",
+            "name": "Tag",
+            "multi_select": [{"id": "id-a"}, "id-b"]
+        })];
+
+        // Canonical key matches (case-insensitively) and reads both shapes.
+        assert_eq!(
+            tag_ids_from_properties(&properties, "Tag"),
+            ["id-a", "id-b"]
+        );
+        // A non-key string finds nothing: callers must resolve to the key first.
+        assert!(tag_ids_from_properties(&properties, "My Tags").is_empty());
+    }
 }

@@ -7,7 +7,7 @@
       response path; one unknown value (e.g. layout `set`) fails the whole
       list/search deserialization. Add `Unknown` fallback variants
       (response-side only; CLI input stays strict).
-- [ ] 2. Fix tag property key/name mismatch (silent tag wipe).
+- [x] 2. Fix tag property key/name mismatch (silent tag wipe).
       `resolve_property` resolves name→id, but `get_object_tag_ids` matches by
       `key` and the write uses the raw user string as `key`. Passing a display
       name reads current tags as empty and `--tag-add` replaces/wipes them.
@@ -38,7 +38,7 @@
 
 - [ ] T1. Unit tests for resolution logic (space/property/tag): exact-vs-fuzzy
       precedence, ambiguity errors.
-- [ ] T2. Tag merge semantics tests (add/remove/idempotency, key≠name case).
+- [x] T2. Tag merge semantics tests (add/remove/idempotency, key≠name case).
 - [ ] T3. Wiremock test for the auto-pagination loop (multi-page accumulation
       and stall guard).
 - [x] T4. Response-decoding fixtures with unknown layout/format/color values.
