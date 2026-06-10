@@ -40,7 +40,7 @@
 - [x] T1. Unit tests for resolution logic (space/property/tag): exact-vs-fuzzy
       precedence, ambiguity errors.
 - [x] T2. Tag merge semantics tests (add/remove/idempotency, key≠name case).
-- [ ] T3. Wiremock test for the auto-pagination loop (multi-page accumulation
+- [x] T3. Wiremock test for the auto-pagination loop (multi-page accumulation
       and stall guard).
 - [x] T4. Response-decoding fixtures with unknown layout/format/color values.
 - [ ] T5. Tests for count grouping helpers (`count_by_property`,

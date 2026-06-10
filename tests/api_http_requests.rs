@@ -55,6 +55,62 @@ async fn objects_page_sends_correct_request_and_deserializes() {
 }
 
 #[tokio::test]
+async fn auto_pagination_accumulates_all_pages() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/v1/spaces/s1/objects"))
+        .and(query_param("offset", "0"))
+        .and(query_param("limit", "1000"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": [minimal_object("obj1", "One", "s1")],
+            "pagination": { "total": 2, "has_more": true }
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/v1/spaces/s1/objects"))
+        .and(query_param("offset", "1000"))
+        .and(query_param("limit", "1000"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": [minimal_object("obj2", "Two", "s1")],
+            "pagination": { "total": 2, "has_more": false }
+        })))
+        .mount(&server)
+        .await;
+
+    let client = AnytypeClient::new(server.uri(), None).unwrap();
+    let resp = client.objects("s1").await.unwrap();
+
+    assert_eq!(
+        resp.data.iter().map(|o| o.id.as_str()).collect::<Vec<_>>(),
+        ["obj1", "obj2"]
+    );
+    let pagination = resp.pagination.unwrap();
+    assert_eq!(pagination.total, Some(2));
+    assert_eq!(pagination.has_more, Some(false));
+}
+
+#[tokio::test]
+async fn auto_pagination_errors_on_stalled_pages() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/v1/spaces/s1/objects"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": [],
+            "pagination": { "has_more": true }
+        })))
+        .mount(&server)
+        .await;
+
+    let client = AnytypeClient::new(server.uri(), None).unwrap();
+    let err = client.objects("s1").await.unwrap_err().to_string();
+
+    assert!(err.contains("pagination stalled"), "{err}");
+}
+
+#[tokio::test]
 async fn http_error_includes_method_and_path() {
     let server = MockServer::start().await;
 
