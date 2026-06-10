@@ -45,4 +45,4 @@
 - [x] T4. Response-decoding fixtures with unknown layout/format/color values.
 - [x] T5. Tests for count grouping helpers (`count_by_property`,
       `display_property_value`, missing/empty buckets).
-- [ ] T6. Config load/save round-trip test, including the `app_key` alias.
+- [x] T6. Config load/save round-trip test, including the `app_key` alias.

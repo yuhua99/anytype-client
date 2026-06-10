@@ -63,3 +63,59 @@ fn write_private(path: &PathBuf, content: &str) -> Result<()> {
     fs::write(path, content)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TempPath(PathBuf);
+
+    impl Drop for TempPath {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.0);
+        }
+    }
+
+    fn temp_config_path(name: &str) -> TempPath {
+        TempPath(std::env::temp_dir().join(format!(
+            "anyclient-config-test-{}-{name}.toml",
+            std::process::id()
+        )))
+    }
+
+    #[test]
+    fn save_and_load_round_trips() {
+        let path = temp_config_path("round-trip");
+
+        let config = Config {
+            base_url: Some("http://127.0.0.1:31012".into()),
+            api_key: Some("secret".into()),
+        };
+        config.save(&path.0).unwrap();
+
+        let loaded = Config::load(&path.0).unwrap();
+        assert_eq!(loaded.base_url.as_deref(), Some("http://127.0.0.1:31012"));
+        assert_eq!(loaded.api_key.as_deref(), Some("secret"));
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(&path.0).unwrap().permissions().mode();
+            assert_eq!(mode & 0o777, 0o600);
+        }
+    }
+
+    #[test]
+    fn load_returns_default_for_missing_file() {
+        let path = temp_config_path("missing");
+        let loaded = Config::load(&path.0).unwrap();
+        assert!(loaded.base_url.is_none());
+        assert!(loaded.api_key.is_none());
+    }
+
+    #[test]
+    fn legacy_app_key_alias_still_loads() {
+        let config: Config = toml::from_str("app_key = \"legacy\"").unwrap();
+        assert_eq!(config.api_key.as_deref(), Some("legacy"));
+    }
+}
