@@ -24,7 +24,7 @@
 
 - [x] 5. Print a stderr notice when fuzzy (substring) resolution picks a
       space/property/tag, so destructive commands are not silently redirected.
-- [ ] 6. Skip the full `GET /spaces` round-trip when the input resolves
+- [x] 6. Skip the full `GET /spaces` round-trip when the input resolves
       directly as a space ID.
 - [ ] 7. Deduplicate the page-limit constant (commands hardcodes 1000, api has
       `PAGE_LIMIT`); drop redundant comma re-splitting in `load_object_ids`.

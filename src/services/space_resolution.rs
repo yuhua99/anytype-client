@@ -3,6 +3,13 @@ use anyhow::{Result, anyhow};
 use crate::{api::AnytypeClient, models::Space, output::eprint_status, services::Match};
 
 pub(crate) async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> Result<String> {
+    // Fast path: inputs shaped like a space ID are verified with a direct GET,
+    // skipping the full space listing. On failure we fall back to list-based
+    // resolution, which produces the proper "space not found" error.
+    if looks_like_space_id(id_or_name) && client.space(id_or_name).await.is_ok() {
+        return Ok(id_or_name.to_string());
+    }
+
     let spaces = client.spaces().await?.data;
     match resolve_space_from_list(&spaces, id_or_name)? {
         Match::Exact(space_id) => Ok(space_id),
@@ -18,6 +25,12 @@ pub(crate) async fn resolve_space(client: &AnytypeClient, id_or_name: &str) -> R
             Ok(space_id)
         }
     }
+}
+
+/// Anytype space IDs are long CID-style strings (e.g. `bafyrei…`); names that
+/// long without whitespace are unlikely, so this only gates the fast path.
+fn looks_like_space_id(input: &str) -> bool {
+    input.len() >= 32 && !input.chars().any(char::is_whitespace)
 }
 
 fn resolve_space_from_list(spaces: &[Space], id_or_name: &str) -> Result<Match<String>> {
@@ -68,6 +81,17 @@ mod tests {
             icon: None,
             extra: Default::default(),
         }
+    }
+
+    #[test]
+    fn space_id_heuristic_accepts_cids_and_rejects_names() {
+        assert!(looks_like_space_id(
+            "bafyreialsvyqzgf3xx2nyvzq6gie5mhg77ngfczzgkbeyvirmi3v"
+        ));
+        assert!(!looks_like_space_id("Work"));
+        assert!(!looks_like_space_id(
+            "a long space name with enough characters"
+        ));
     }
 
     #[test]
