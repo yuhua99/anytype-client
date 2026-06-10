@@ -2,7 +2,7 @@
 
 ## High priority
 
-- [ ] 1. Tolerate unknown enum values in API responses.
+- [x] 1. Tolerate unknown enum values in API responses.
       `ObjectLayout`, `PropertyFormat`, `IconColor` are closed enums on the
       response path; one unknown value (e.g. layout `set`) fails the whole
       list/search deserialization. Add `Unknown` fallback variants
@@ -41,7 +41,7 @@
 - [ ] T2. Tag merge semantics tests (add/remove/idempotency, key≠name case).
 - [ ] T3. Wiremock test for the auto-pagination loop (multi-page accumulation
       and stall guard).
-- [ ] T4. Response-decoding fixtures with unknown layout/format/color values.
+- [x] T4. Response-decoding fixtures with unknown layout/format/color values.
 - [ ] T5. Tests for count grouping helpers (`count_by_property`,
       `display_property_value`, missing/empty buckets).
 - [ ] T6. Config load/save round-trip test, including the `app_key` alias.

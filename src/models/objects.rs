@@ -19,6 +19,11 @@ pub enum ObjectLayout {
     Profile,
     Action,
     Note,
+    /// Fallback for layouts not modeled by the CLI (e.g. set, collection).
+    /// Response-side only; not accepted as CLI input.
+    #[serde(other)]
+    #[value(skip)]
+    Unknown,
 }
 
 impl fmt::Display for ObjectLayout {
@@ -28,6 +33,7 @@ impl fmt::Display for ObjectLayout {
             Self::Profile => "profile",
             Self::Action => "action",
             Self::Note => "note",
+            Self::Unknown => "unknown",
         };
         f.write_str(value)
     }

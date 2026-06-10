@@ -142,6 +142,36 @@ fn deserializes_nullable_list_filters_and_sorts_as_empty() {
 }
 
 #[test]
+fn deserializes_unknown_enum_values_as_unknown() {
+    let object: Object = serde_json::from_value(json!({
+        "id": "object-id",
+        "name": "A set",
+        "space_id": "space-id",
+        "layout": "set"
+    }))
+    .unwrap();
+    assert_eq!(object.layout, ObjectLayout::Unknown);
+
+    let property: Property = serde_json::from_value(json!({
+        "id": "property-id",
+        "key": "status",
+        "name": "Status",
+        "format": "hyperlink"
+    }))
+    .unwrap();
+    assert_eq!(property.format.to_string(), "unknown");
+
+    let tag: Tag = serde_json::from_value(json!({
+        "id": "tag-id",
+        "key": "done",
+        "name": "Done",
+        "color": "neon"
+    }))
+    .unwrap();
+    assert_eq!(tag.color.to_string(), "unknown");
+}
+
+#[test]
 fn round_trips_data_response_pagination() {
     let response = round_trip(DataResponse {
         data: vec![Space {

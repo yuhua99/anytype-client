@@ -21,6 +21,11 @@ pub enum PropertyFormat {
     Email,
     Phone,
     Objects,
+    /// Fallback for formats not modeled by the CLI.
+    /// Response-side only; not accepted as CLI input.
+    #[serde(other)]
+    #[value(skip)]
+    Unknown,
 }
 
 impl fmt::Display for PropertyFormat {
@@ -37,6 +42,7 @@ impl fmt::Display for PropertyFormat {
             Self::Email => "email",
             Self::Phone => "phone",
             Self::Objects => "objects",
+            Self::Unknown => "unknown",
         };
         f.write_str(value)
     }

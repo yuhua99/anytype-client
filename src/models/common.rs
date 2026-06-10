@@ -37,6 +37,11 @@ pub enum IconColor {
     Ice,
     Teal,
     Lime,
+    /// Fallback for colors not modeled by the CLI.
+    /// Response-side only; not accepted as CLI input.
+    #[serde(other)]
+    #[value(skip)]
+    Unknown,
 }
 
 impl fmt::Display for IconColor {
@@ -52,6 +57,7 @@ impl fmt::Display for IconColor {
             Self::Ice => "ice",
             Self::Teal => "teal",
             Self::Lime => "lime",
+            Self::Unknown => "unknown",
         };
         f.write_str(value)
     }
