@@ -17,7 +17,7 @@
 - [x] 4a. Move `objects find` filtering server-side via typed
       `FilterExpression` (tag, property, missing-property); make `--name`
       behave as documented (substring on name).
-- [ ] 4b. Use `pagination.total` for ungrouped `objects count` instead of
+- [x] 4b. Use `pagination.total` for ungrouped `objects count` instead of
       downloading every object.
 
 ## Medium priority

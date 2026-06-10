@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 use serde_json::Value;
 
 use crate::{
-    api::AnytypeClient,
+    api::{AnytypeClient, PageOptions},
     models::{Object, SearchRequest},
 };
 
@@ -25,23 +25,52 @@ pub(crate) async fn count_objects(
 ) -> Result<ObjectCountResult> {
     let space_id = resolve_space(client, &space).await?;
     let req = SearchRequest::new(String::new());
-    let results = client.space_search_page(&space_id, &req, None).await?.data;
-    let total = results.len();
 
     match group_by.as_deref() {
-        Some("type") => Ok(ObjectCountResult::Grouped {
-            counts: count_by_type(&results),
-            total,
-        }),
-        Some(group) if group.starts_with("property:") => Ok(ObjectCountResult::Grouped {
-            counts: count_by_property(&results, &group["property:".len()..]),
-            total,
-        }),
+        // Grouping needs every object; ungrouped counts only need the total.
+        None => Ok(ObjectCountResult::Total(
+            count_total(client, &space_id, &req).await?,
+        )),
+        Some("type") => {
+            let results = client.space_search_page(&space_id, &req, None).await?.data;
+            let total = results.len();
+            Ok(ObjectCountResult::Grouped {
+                counts: count_by_type(&results),
+                total,
+            })
+        }
+        Some(group) if group.starts_with("property:") => {
+            let results = client.space_search_page(&space_id, &req, None).await?.data;
+            let total = results.len();
+            Ok(ObjectCountResult::Grouped {
+                counts: count_by_property(&results, &group["property:".len()..]),
+                total,
+            })
+        }
         Some(other) => Err(anyhow!(
             "invalid --group-by: '{other}'. Use 'type' or 'property:<key>'"
         )),
-        None => Ok(ObjectCountResult::Total(total)),
     }
+}
+
+/// Count via `pagination.total` from a single-item page. Falls back to
+/// fetching everything only when the API omits the total.
+async fn count_total(client: &AnytypeClient, space_id: &str, req: &SearchRequest) -> Result<usize> {
+    let page = client
+        .space_search_page(
+            space_id,
+            req,
+            Some(PageOptions {
+                offset: 0,
+                limit: 1,
+            }),
+        )
+        .await?;
+    if let Some(total) = page.pagination.as_ref().and_then(|page| page.total) {
+        return Ok(total as usize);
+    }
+    let results = client.space_search_page(space_id, req, None).await?.data;
+    Ok(results.len())
 }
 
 fn count_by_type(objects: &[Object]) -> BTreeMap<String, usize> {
@@ -128,4 +157,75 @@ fn display_property_value(prop: &Value) -> String {
         return value.to_string();
     }
     serde_json::to_string(prop).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use wiremock::matchers::{method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn mock_spaces(server: &MockServer) {
+        Mock::given(method("GET"))
+            .and(path("/v1/spaces"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{"id": "s1", "name": "Work"}],
+                "pagination": {"has_more": false}
+            })))
+            .mount(server)
+            .await;
+    }
+
+    #[tokio::test]
+    async fn ungrouped_count_uses_pagination_total() {
+        let server = MockServer::start().await;
+        mock_spaces(&server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/v1/spaces/s1/search"))
+            .and(query_param("limit", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{"id": "o1", "name": "One", "space_id": "s1", "layout": "basic"}],
+                "pagination": {"total": 42, "has_more": true}
+            })))
+            .mount(&server)
+            .await;
+
+        let client = AnytypeClient::new(server.uri(), None).unwrap();
+        let result = count_objects(&client, "s1".into(), None).await.unwrap();
+        assert!(matches!(result, ObjectCountResult::Total(42)));
+    }
+
+    #[tokio::test]
+    async fn ungrouped_count_falls_back_to_full_fetch_without_total() {
+        let server = MockServer::start().await;
+        mock_spaces(&server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/v1/spaces/s1/search"))
+            .and(query_param("limit", "1"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{"id": "o1", "name": "One", "space_id": "s1", "layout": "basic"}],
+                "pagination": {"has_more": true}
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/v1/spaces/s1/search"))
+            .and(query_param("limit", "1000"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [
+                    {"id": "o1", "name": "One", "space_id": "s1", "layout": "basic"},
+                    {"id": "o2", "name": "Two", "space_id": "s1", "layout": "basic"}
+                ],
+                "pagination": {"has_more": false}
+            })))
+            .mount(&server)
+            .await;
+
+        let client = AnytypeClient::new(server.uri(), None).unwrap();
+        let result = count_objects(&client, "s1".into(), None).await.unwrap();
+        assert!(matches!(result, ObjectCountResult::Total(2)));
+    }
 }
