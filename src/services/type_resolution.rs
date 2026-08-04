@@ -1,29 +1,47 @@
 use crate::{api::AnytypeClient, models::ObjectType, output::eprint_status, services::Match};
 use anyhow::{Result, anyhow};
 
-pub(crate) async fn resolve_default_template_for_type(
+pub(crate) struct ResolvedType {
+    id: String,
+    pub(crate) key: String,
+    default_template_id: Option<String>,
+}
+
+pub(crate) async fn resolve_type(
     client: &AnytypeClient,
     space_id: &str,
-    type_key: &str,
-) -> Result<Option<String>> {
+    name_or_key: &str,
+) -> Result<ResolvedType> {
     let types = client.types(space_id).await?.data;
-    let r#type = match resolve_type_from_list(&types, type_key)? {
+    let r#type = match resolve_type_from_list(&types, name_or_key)? {
         Match::Exact(r#type) => r#type,
         Match::Fuzzy(r#type) => {
             eprint_status(format!(
-                "note: resolved type '{type_key}' by partial match to '{}' ({})",
+                "note: resolved type '{name_or_key}' by partial match to '{}' ({})",
                 r#type.name, r#type.id
             ));
             r#type
         }
     };
 
+    Ok(ResolvedType {
+        id: r#type.id.clone(),
+        key: r#type.key.clone(),
+        default_template_id: r#type.default_template_id.clone(),
+    })
+}
+
+pub(crate) async fn resolve_default_template_for_type(
+    client: &AnytypeClient,
+    space_id: &str,
+    r#type: &ResolvedType,
+) -> Result<Option<String>> {
     if let Some(id) = r#type
         .default_template_id
-        .clone()
+        .as_deref()
         .filter(|id| !id.is_empty())
     {
-        return Ok(Some(id));
+        return Ok(Some(id.to_string()));
     }
     let templates = client.templates(space_id, &r#type.id).await?.data;
     Ok(match templates.as_slice() {

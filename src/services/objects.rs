@@ -10,8 +10,10 @@ use crate::{
         SearchRequest, Tag, UpdateObjectRequest,
     },
     services::{
-        property_resolution::resolve_property, space_resolution::resolve_space,
-        tag_resolution::resolve_tag_from_list, type_resolution::resolve_default_template_for_type,
+        property_resolution::resolve_property,
+        space_resolution::resolve_space,
+        tag_resolution::resolve_tag_from_list,
+        type_resolution::{resolve_default_template_for_type, resolve_type},
     },
 };
 
@@ -79,12 +81,13 @@ pub(crate) async fn create_object(
     params: CreateObjectParams,
 ) -> Result<Object> {
     let space_id = resolve_space(client, &params.space).await?;
+    let r#type = resolve_type(client, &space_id, &params.type_key).await?;
     let template_id = if let Some(id) = params.template_id {
         Some(id)
     } else {
-        resolve_default_template_for_type(client, &space_id, &params.type_key).await?
+        resolve_default_template_for_type(client, &space_id, &r#type).await?
     };
-    let req = CreateObjectRequest::new(params.type_key, params.name)
+    let req = CreateObjectRequest::new(r#type.key, params.name)
         .with_body(params.body)
         .with_icon(params.icon)
         .with_template_id(template_id)
@@ -97,8 +100,12 @@ pub(crate) async fn update_object(
     params: UpdateObjectParams,
 ) -> Result<Object> {
     let space_id = resolve_space(client, &params.space).await?;
+    let type_key = match params.type_key {
+        Some(type_key) => Some(resolve_type(client, &space_id, &type_key).await?.key),
+        None => None,
+    };
     let mut req = UpdateObjectRequest::new()
-        .with_type_key(params.type_key)
+        .with_type_key(type_key)
         .with_name(params.name)
         .with_markdown(params.markdown)
         .with_icon(params.icon)
@@ -349,6 +356,8 @@ mod tests {
     use super::*;
     use crate::models::IconColor;
     use serde_json::json;
+    use wiremock::matchers::{body_json, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn tag(id: &str, key: &str, name: &str) -> Tag {
         Tag {
@@ -359,6 +368,88 @@ mod tests {
             object: String::new(),
             extra: Default::default(),
         }
+    }
+
+    async fn mock_space_and_type(server: &MockServer) {
+        Mock::given(method("GET"))
+            .and(path("/v1/spaces"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{"id": "s1", "name": "Work"}]
+            })))
+            .mount(server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/v1/spaces/s1/types"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "data": [{
+                    "id": "type-1",
+                    "key": "note",
+                    "name": "Meeting Note",
+                    "default_template_id": "template-1"
+                }]
+            })))
+            .mount(server)
+            .await;
+    }
+
+    #[tokio::test]
+    async fn display_name_type_is_sent_as_resolved_key() {
+        let server = MockServer::start().await;
+        mock_space_and_type(&server).await;
+
+        Mock::given(method("POST"))
+            .and(path("/v1/spaces/s1/objects"))
+            .and(body_json(json!({
+                "type_key": "note",
+                "name": "Created",
+                "template_id": "template-1"
+            })))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "object": {"id": "obj-1", "name": "Created", "space_id": "s1"}
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(method("PATCH"))
+            .and(path("/v1/spaces/s1/objects/obj-1"))
+            .and(body_json(json!({"type_key": "note"})))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "object": {"id": "obj-1", "name": "Created", "space_id": "s1"}
+            })))
+            .mount(&server)
+            .await;
+
+        let client = AnytypeClient::new(server.uri(), None).unwrap();
+        create_object(
+            &client,
+            CreateObjectParams {
+                space: "Work".into(),
+                type_key: "Meeting Note".into(),
+                name: "Created".into(),
+                body: String::new(),
+                icon: None,
+                template_id: None,
+                properties: Vec::new(),
+            },
+        )
+        .await
+        .unwrap();
+        update_object(
+            &client,
+            UpdateObjectParams {
+                space: "Work".into(),
+                object_id: "obj-1".into(),
+                type_key: Some("Meeting Note".into()),
+                name: None,
+                markdown: None,
+                icon: None,
+                properties: Vec::new(),
+                tag_property: None,
+                tag_add: Vec::new(),
+                tag_remove: Vec::new(),
+            },
+        )
+        .await
+        .unwrap();
     }
 
     #[test]
