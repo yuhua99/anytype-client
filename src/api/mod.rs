@@ -13,6 +13,23 @@ mod types;
 pub(crate) use client::PAGE_LIMIT;
 pub use client::{AnytypeClient, PageOptions};
 
+use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
+
+const PATH_SEGMENT_ENCODE_SET: &AsciiSet = &CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'#')
+    .add(b'%')
+    .add(b'/')
+    .add(b'<')
+    .add(b'>')
+    .add(b'?')
+    .add(b'`');
+
+fn encode_path_segment(segment: &str) -> String {
+    utf8_percent_encode(segment, PATH_SEGMENT_ENCODE_SET).to_string()
+}
+
 // Centralized API endpoint path builders.
 // Owned by the api layer; used only by endpoint method implementations.
 // Grouped by domain for maintainability; currently covers objects, search, types, properties, tags, files, lists, members, spaces, and auth.
@@ -22,97 +39,165 @@ fn global_search_path() -> &'static str {
 }
 
 fn space_search_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/search")
+    format!("/spaces/{}/search", encode_path_segment(space_id))
 }
 
 fn space_objects_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/objects")
+    format!("/spaces/{}/objects", encode_path_segment(space_id))
 }
 
 fn space_object_path(space_id: &str, object_id: &str) -> String {
-    format!("/spaces/{space_id}/objects/{object_id}")
+    format!(
+        "/spaces/{}/objects/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(object_id)
+    )
 }
 
 fn space_object_path_with_format(space_id: &str, object_id: &str, format: &str) -> String {
-    format!("/spaces/{space_id}/objects/{object_id}?format={format}")
+    format!(
+        "/spaces/{}/objects/{}?format={format}",
+        encode_path_segment(space_id),
+        encode_path_segment(object_id)
+    )
 }
 
 // Types domain paths
 fn space_types_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/types")
+    format!("/spaces/{}/types", encode_path_segment(space_id))
 }
 
 fn space_type_path(space_id: &str, type_id: &str) -> String {
-    format!("/spaces/{space_id}/types/{type_id}")
+    format!(
+        "/spaces/{}/types/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(type_id)
+    )
 }
 
 fn space_type_templates_path(space_id: &str, type_id: &str) -> String {
-    format!("/spaces/{space_id}/types/{type_id}/templates")
+    format!(
+        "/spaces/{}/types/{}/templates",
+        encode_path_segment(space_id),
+        encode_path_segment(type_id)
+    )
 }
 
 fn space_type_template_path(space_id: &str, type_id: &str, template_id: &str) -> String {
-    format!("/spaces/{space_id}/types/{type_id}/templates/{template_id}")
+    format!(
+        "/spaces/{}/types/{}/templates/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(type_id),
+        encode_path_segment(template_id)
+    )
 }
 
 // Properties domain paths
 fn space_properties_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/properties")
+    format!("/spaces/{}/properties", encode_path_segment(space_id))
 }
 
 fn space_property_path(space_id: &str, property_id: &str) -> String {
-    format!("/spaces/{space_id}/properties/{property_id}")
+    format!(
+        "/spaces/{}/properties/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(property_id)
+    )
 }
 
 // Tags domain paths (nested under properties)
 fn space_property_tags_path(space_id: &str, property_id: &str) -> String {
-    format!("/spaces/{space_id}/properties/{property_id}/tags")
+    format!(
+        "/spaces/{}/properties/{}/tags",
+        encode_path_segment(space_id),
+        encode_path_segment(property_id)
+    )
 }
 
 fn space_property_tag_path(space_id: &str, property_id: &str, tag_id: &str) -> String {
-    format!("/spaces/{space_id}/properties/{property_id}/tags/{tag_id}")
+    format!(
+        "/spaces/{}/properties/{}/tags/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(property_id),
+        encode_path_segment(tag_id)
+    )
 }
 
 // Files domain paths
 fn space_files_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/files")
+    format!("/spaces/{}/files", encode_path_segment(space_id))
 }
 
 fn space_file_path(space_id: &str, file_id: &str) -> String {
-    format!("/spaces/{space_id}/files/{file_id}")
+    format!(
+        "/spaces/{}/files/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(file_id)
+    )
 }
 
 fn space_file_path_with_width(space_id: &str, file_id: &str, width: i64) -> String {
-    format!("/spaces/{space_id}/files/{file_id}?width={width}")
+    format!(
+        "/spaces/{}/files/{}?width={width}",
+        encode_path_segment(space_id),
+        encode_path_segment(file_id)
+    )
 }
 
 fn space_file_path_with_skip_bin(space_id: &str, file_id: &str, skip_bin: bool) -> String {
-    format!("/spaces/{space_id}/files/{file_id}?skip_bin={skip_bin}")
+    format!(
+        "/spaces/{}/files/{}?skip_bin={skip_bin}",
+        encode_path_segment(space_id),
+        encode_path_segment(file_id)
+    )
 }
 
 // Lists domain paths
 fn space_list_views_path(space_id: &str, list_id: &str) -> String {
-    format!("/spaces/{space_id}/lists/{list_id}/views")
+    format!(
+        "/spaces/{}/lists/{}/views",
+        encode_path_segment(space_id),
+        encode_path_segment(list_id)
+    )
 }
 
 fn space_list_view_objects_path(space_id: &str, list_id: &str, view_id: &str) -> String {
-    format!("/spaces/{space_id}/lists/{list_id}/views/{view_id}/objects")
+    format!(
+        "/spaces/{}/lists/{}/views/{}/objects",
+        encode_path_segment(space_id),
+        encode_path_segment(list_id),
+        encode_path_segment(view_id)
+    )
 }
 
 fn space_list_objects_path(space_id: &str, list_id: &str) -> String {
-    format!("/spaces/{space_id}/lists/{list_id}/objects")
+    format!(
+        "/spaces/{}/lists/{}/objects",
+        encode_path_segment(space_id),
+        encode_path_segment(list_id)
+    )
 }
 
 fn space_list_object_path(space_id: &str, list_id: &str, object_id: &str) -> String {
-    format!("/spaces/{space_id}/lists/{list_id}/objects/{object_id}")
+    format!(
+        "/spaces/{}/lists/{}/objects/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(list_id),
+        encode_path_segment(object_id)
+    )
 }
 
 // Members domain paths
 fn space_members_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}/members")
+    format!("/spaces/{}/members", encode_path_segment(space_id))
 }
 
 fn space_member_path(space_id: &str, member_id: &str) -> String {
-    format!("/spaces/{space_id}/members/{member_id}")
+    format!(
+        "/spaces/{}/members/{}",
+        encode_path_segment(space_id),
+        encode_path_segment(member_id)
+    )
 }
 
 // Spaces domain paths
@@ -121,7 +206,7 @@ fn spaces_path() -> &'static str {
 }
 
 fn space_path(space_id: &str) -> String {
-    format!("/spaces/{space_id}")
+    format!("/spaces/{}", encode_path_segment(space_id))
 }
 
 // Auth domain paths
@@ -143,6 +228,10 @@ mod tests {
         assert_eq!(space_search_path("s1"), "/spaces/s1/search");
         assert_eq!(space_objects_path("s1"), "/spaces/s1/objects");
         assert_eq!(space_object_path("s1", "o1"), "/spaces/s1/objects/o1");
+        assert_eq!(
+            space_object_path("s1", "a/b?c#d"),
+            "/spaces/s1/objects/a%2Fb%3Fc%23d"
+        );
         assert_eq!(
             space_object_path_with_format("s1", "o1", "md"),
             "/spaces/s1/objects/o1?format=md"

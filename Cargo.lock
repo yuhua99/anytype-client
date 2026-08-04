@@ -68,6 +68,7 @@ dependencies = [
  "anyhow",
  "clap",
  "dirs",
+ "percent-encoding",
  "reqwest",
  "serde",
  "serde_json",
