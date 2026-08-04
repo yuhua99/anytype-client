@@ -1,7 +1,10 @@
 use crate::{
     api::AnytypeClient,
     cli::{ObjectsArgs, ObjectsCommand, OutputFormat},
-    output::{eprint_status, print_count_total, print_data, print_grouped_counts, print_one},
+    output::{
+        eprint_status, print_count_total, print_data, print_grouped_counts, print_one,
+        render_bulk_update_summary,
+    },
     services::objects::{
         self, BulkUpdateParams, BulkUpdateResult, CreateObjectParams, FindObjectsParams,
         ObjectCountResult, UpdateObjectParams,
@@ -143,9 +146,11 @@ pub async fn run(client: &AnytypeClient, args: ObjectsArgs, output: &OutputForma
             .await?
             {
                 BulkUpdateResult::NoMatches => eprint_status("no objects matched"),
-                BulkUpdateResult::Applied { matched } => {
-                    eprint_status(format!("{matched} objects updated"))
-                }
+                BulkUpdateResult::Applied {
+                    matched,
+                    updated,
+                    unchanged,
+                } => eprint_status(render_bulk_update_summary(matched, updated, unchanged)),
                 BulkUpdateResult::DryRun { matched, changes } => {
                     for change in changes {
                         eprint_status(format!("{}: {}", change.name, change.changes.join(" ")));

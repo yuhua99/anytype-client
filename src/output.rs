@@ -61,6 +61,14 @@ pub fn eprint_status(msg: impl std::fmt::Display) {
     eprintln!("{msg}");
 }
 
+pub(crate) fn render_bulk_update_summary(
+    matched: usize,
+    updated: usize,
+    unchanged: usize,
+) -> String {
+    format!("{updated} objects updated, {unchanged} unchanged ({matched} matched)")
+}
+
 /// Print a simple total count respecting the output format.
 /// Used by object count command (non-grouped case).
 pub fn print_count_total(total: usize, output: &OutputFormat) -> Result<()> {
@@ -105,4 +113,17 @@ pub fn print_grouped_counts(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::render_bulk_update_summary;
+
+    #[test]
+    fn renders_bulk_update_no_op_summary() {
+        assert_eq!(
+            render_bulk_update_summary(1, 0, 1),
+            "0 objects updated, 1 unchanged (1 matched)"
+        );
+    }
 }

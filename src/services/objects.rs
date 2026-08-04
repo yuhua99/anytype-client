@@ -60,6 +60,8 @@ pub(crate) enum BulkUpdateResult {
     NoMatches,
     Applied {
         matched: usize,
+        updated: usize,
+        unchanged: usize,
     },
     DryRun {
         matched: usize,
@@ -279,6 +281,7 @@ pub(crate) async fn update_many_objects(
     };
 
     let mut dry_run_changes = Vec::new();
+    let mut updated = 0;
 
     for object_id in &object_ids {
         let mut req = UpdateObjectRequest::new();
@@ -323,6 +326,7 @@ pub(crate) async fn update_many_objects(
             dry_run_changes.push(BulkUpdateChange { name, changes });
         } else {
             client.update_object(&space_id, object_id, &req).await?;
+            updated += 1;
         }
     }
 
@@ -334,6 +338,8 @@ pub(crate) async fn update_many_objects(
     } else {
         Ok(BulkUpdateResult::Applied {
             matched: object_ids.len(),
+            updated,
+            unchanged: object_ids.len() - updated,
         })
     }
 }
