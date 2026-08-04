@@ -111,6 +111,26 @@ async fn auto_pagination_errors_on_stalled_pages() {
 }
 
 #[tokio::test]
+async fn auto_pagination_errors_when_pages_do_not_terminate() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/v1/spaces/s1/objects"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": [minimal_object("obj1", "One", "s1")],
+            "pagination": { "has_more": true }
+        })))
+        .mount(&server)
+        .await;
+
+    let client = AnytypeClient::new(server.uri(), None).unwrap();
+    let err = client.objects("s1").await.unwrap_err().to_string();
+
+    assert!(err.contains("pagination did not terminate"), "{err}");
+    assert!(err.contains("server may be returning"), "{err}");
+}
+
+#[tokio::test]
 async fn http_error_includes_method_and_path() {
     let server = MockServer::start().await;
 

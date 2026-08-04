@@ -10,6 +10,7 @@ use crate::{ANYTYPE_VERSION, models::DataResponse};
 /// Maximum page size accepted by the API; also the page size used when
 /// auto-paginating through all results.
 pub(crate) const PAGE_LIMIT: i64 = 1000;
+const MAX_AUTO_PAGES: usize = 1000;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PageOptions {
@@ -142,8 +143,16 @@ impl AnytypeClient {
         let mut offset = 0;
         let mut data = Vec::new();
         let mut total = None;
+        let mut pages = 0;
 
         loop {
+            if pages == MAX_AUTO_PAGES {
+                return Err(anyhow!(
+                    "pagination did not terminate for {path} after {MAX_AUTO_PAGES} pages; server may be returning has_more=true without advancing pages"
+                ));
+            }
+            pages += 1;
+
             let paged_path = page_path(path, offset, PAGE_LIMIT);
             let mut response: DataResponse<T> =
                 self.request(method.clone(), &paged_path, body).await?;
