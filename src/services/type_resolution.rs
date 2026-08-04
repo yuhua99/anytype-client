@@ -9,7 +9,14 @@ pub(crate) async fn resolve_default_template_for_type(
     let types = client.types(space_id).await?.data;
     for t in types {
         if t.id == type_key || t.key.eq_ignore_ascii_case(type_key) {
-            return Ok(t.default_template_id.clone().filter(|id| !id.is_empty()));
+            if let Some(id) = t.default_template_id.clone().filter(|id| !id.is_empty()) {
+                return Ok(Some(id));
+            }
+            let templates = client.templates(space_id, &t.id).await?.data;
+            return Ok(match templates.as_slice() {
+                [only] => Some(only.id.clone()),
+                _ => None,
+            });
         }
     }
     Err(anyhow!(
